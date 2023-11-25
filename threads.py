@@ -1,5 +1,4 @@
 import threading
-from time import sleep
 
 
 class Thread(threading.Thread): 
@@ -13,4 +12,4 @@ class Thread(threading.Thread):
     def run(self): 
         print( str(self.thread_name) + " " + str(self.thread_ID) )
 
-        sleep(10)
+        self.node.run()
