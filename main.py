@@ -20,12 +20,13 @@ def main():
             while True:
                 try:
                     port = int(port)
-                    node = Node(port=port, ips=[8001, 8002, 8003])
-                    node.run()
-                    break
                 except:
                     print("Invalid port number provided. Please enter integer.")
                     print("")
+                
+                node = Node(port=port, ips=[8001, 8002, 8003])
+                node.run()
+                break
             break
         else:
             print("")
