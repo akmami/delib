@@ -7,8 +7,8 @@ def main():
     while True:
         print("Please specify your choice.")
         print("")
-        print("\t 1. Join")
-        print("\t 2. Create")
+        print("\t1. Join")
+        print("\t2. Create")
         print("")
         choice = input("> ")
 
@@ -16,6 +16,16 @@ def main():
             break
 
         elif choice == "2":
+            port = input("Please specify port (default 8000): ")
+            while True:
+                try:
+                    port = int(port)
+                    node = Node(port=port, ips=[8001, 8002, 8003])
+                    node.run()
+                    break
+                except:
+                    print("Invalid port number provided. Please enter integer.")
+                    print("")
             break
         else:
             print("")
