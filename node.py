@@ -1,124 +1,169 @@
+import selectors
 import socket
 import time
-import os 
+import os
+import shutil
 import json
 from decouple import config
+import logging
 
 
 BUFFER_SIZE = config("BUFFER_SIZE", cast=int)   # send 4096 bytes each time step
 TRY_COUNT = config("TRY_COUNT", cast=int)       # try count to send request
-PORT = config("PORT", cast=int)
-DATA_PATH = config("DATA_PATH")
+TCP_PORT = config("TCP_PORT", cast=int)
+UDP_PORT = config("UDP_PORT", cast=int)
+LIBRARY_DIR = config("LIBRARY_DIR")
+TEMP_DIR = config("TEMP")
 
-CWD = os.getcwd()
-HOSTNAME = socket.gethostname()
-IP_ADDRESS = socket.gethostbyname(HOSTNAME)
-DATA_DIR = os.path.join(DATA_PATH)
+logging.getLogger().setLevel(logging.INFO)      # INFO logs enabled
 
-if not os.path.exists(DATA_DIR):
-    os.mkdir(DATA_DIR)
+CWD = os.getcwd()                               # get current working directory
+HOSTNAME = socket.gethostname()                 # get hostname 
+IP_ADDRESS = socket.gethostbyname(HOSTNAME)     # get IP address
+LIBRARY_DIR = os.path.join(CWD, LIBRARY_DIR)    # get full directory for library folder
+TEMP_DIR = os.path.join(CWD, TEMP_DIR)          # get full directory for temp folder.
+                                                # this will be used to store temp files in case file transfer is needed
 
-# FILES_PATH = os.path.join("data", "delib")    # TODO: uncomment this on prod
+
+if not os.path.exists(LIBRARY_DIR):             # all items in node will be stored under library folder
+    os.mkdir(LIBRARY_DIR)
+
+
+if not os.path.exists(TEMP_DIR):                # all temp items in node will be stored under temp folder
+    os.mkdir(TEMP_DIR)
 
 
 class Node:
-    def __init__(self, ip=IP_ADDRESS, port=PORT, ips=[IP_ADDRESS]):
-        self.ip = ip
-        self.port = port
-        self.ips = ips
+    def __init__(self):
+        self.ip = IP_ADDRESS
+        self.ips = []
         self.library = []
 
-        DELIB_PATH = os.path.join(CWD, "data", "delib-{}-{}".format(ip, port)) # TODO: delete this on prod
-
-        if not os.path.exists(DELIB_PATH):
-            os.mkdir(DELIB_PATH)
-
-        print("IP {} port {}".format(ip, port))
+        logging.info("New node created with IP: {} TCP port: {}, UDP port: {}".format(self.ip, TCP_PORT, UDP_PORT))
 
 
-    def run(self, t_sec=31536000): # TODO: default end time is set to 1 year = 31536000
+    def run(self, t_sec=31536000):                                  # default end time is set to 1 year = 31536000
 
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.settimeout(0.2)                                           # set timeout to 0.2 seconds
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)     # if port is not available, then it will reuse it
-        s.bind((self.ip, self.port))
-        s.listen(3)                                                 # max number of requests can wait in the queue
+        selector = selectors.DefaultSelector()
+
+        # Create TCP socket
+        socket_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        socket_tcp.settimeout(0.2)                                           # set timeout to 0.2 seconds
+        socket_tcp.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)     # if port was available, then it will reuse it
+        socket_tcp.bind((self.ip, TCP_PORT))
+        socket_tcp.listen(3)                                                 # max number of requests can wait in the queue
+
+        # Create UDP socket
+        socket_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        socket_udp.settimeout(0.2)
+        socket_udp.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)     # if port is not available, then it will reuse it
+        socket_udp.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)     # enable broadcasting
+        socket_udp.bind((self.ip, UDP_PORT))
+
+        # Register TCP and UDP sockets to the selector
+        selector.register(socket_tcp, selectors.EVENT_READ)
+        selector.register(socket_udp, selectors.EVENT_READ)
 
         t_end = time.time() + t_sec
 
-        while time.time() < t_end:    
-            try:            
-                (conn, addr) = s.accept()
-                data = conn.recv(BUFFER_SIZE).decode('utf-8')       # receive data from client
-                data = json.loads(data)
+        try:
+            while time.time() < t_end:
+                events = selector.select()
 
-                if data["func"] == "print":
-                    print( "Message received from {}, message: {}".format(addr, data["text"]) )
-                    conn.close()
-                
-                elif data["func"] == "file_receive":
-                    filename = data["filename"]
-                    filepath = os.path.join(CWD, "data", "delib-{}-{}".format(self.ip, self.port), filename)
+                for key, _ in events:
                     
-                    # Get the file
-                    with open(filepath, "wb") as f:
-                        while True:
-                            bytes_read = conn.recv(BUFFER_SIZE)     # read 4096 bytes from the socket (receive)
-                            if bytes_read == b"DONE":               # if sender sends DONE signal then it is done.
-                                break
+                    if key.fileobj == socket_tcp:           # messages received by TCP protocol
+
+                        (conn, addr) = key.fileobj.accept()
+                        data = conn.recv(BUFFER_SIZE)       # receive data from client
+                        data = json.loads(data)
+
+                        if "func" not in data:
+                            logging.warning("Request received which does not contain 'func' tag.")
+                            continue
+
+                        logging.info( "Request with func: '{}' received from socket channel.".format( data["func"] ) )
+
+
+                        # --------------------------------------------------------------------------------------------
+                        # --------------------------------------------------------------------------------------------
+                        # execute requested func
+                        # --------------------------------------------------------------------------------------------
+                        # --------------------------------------------------------------------------------------------
+                        if data["func"] == "print_message":
+                            logging.info( "Message received from {}, message: {}".format(addr, data["text"]) )
+
+                        elif data["func"] == "leave":
+                            for ip in self.ips:
+                                socket_udp.sendto( {"func": "remove_ip", "ip": self.ip}.encode("utf-8"), (ip, UDP_PORT) )
+                            logging.info( "You have been removed from DS successfully." )
+
+                            if os.path.isdir(LIBRARY_DIR):
+                                shutil.rmtree(LIBRARY_DIR)
+                            if os.path.isdir(TEMP_DIR):
+                                shutil.rmtree(TEMP_DIR)
                             
-                            f.write(bytes_read)                     # write to the file the bytes we just received
-                    
-                        conn.shutdown(1)
-                    conn.close()
-                
-                elif data["func"] == "file_transfer":
-                    filename = data["filename"]
-                    receiver_ip = data["receiver_ip"]
-                    receiver_port = data ["receiver_port"]
-                    filepath = os.path.join(CWD, "data", "delib-{}-{}".format(self.ip, self.port), filename)
-                    
-                    # Get the file
-                    with open(filepath, "wb") as f:
-                        while True:
-                            bytes_read = conn.recv(BUFFER_SIZE)     # read 4096 bytes from the socket (receive)
-                            if bytes_read == b"DONE":               # if sender sends DONE signal then it is done.
-                                break
-                            
-                            f.write(bytes_read)                     # write to the file the bytes we just received
-                    
-                        conn.shutdown(1)
-                    conn.close()
-
-                    # Send to the receiver
-                    sender_socket = socket.socket()
-                    sender_socket.connect((receiver_ip, receiver_port))
-                                        
-                    sender_socket.sendall( json.dumps({"func": "file_receive", "filename": filename}).encode() )
-
-                    filesize = os.path.getsize(filepath)
-                    
-                    print("sending {}  bytes {} size of to {}:{}".format(filepath, filesize, receiver_ip, receiver_port) )  
-                    
-                    with open(filepath, "rb") as f:
+                            logging.info( "Local files deleted successfuly. See you." )
                         
-                        while True:
-                            bytes_read = f.read(BUFFER_SIZE)
-                            if not bytes_read:                      # if file transmitting is done
-                                s.send(b"DONE")                     # default message to let receiver that file sharing is done
-                                break
-                            sender_socket.send(bytes_read)
-                        sender_socket.shutdown(1)                   # default signal to shutdown file send/receive
-                    sender_socket.close()
-                    
-                    # delete local file
-                    os.remove(filepath)
-                break
-            except socket.timeout:                                  # 0.2 seconds
-                pass
+                        elif data["func"] == "store_file":
+                            filename = data["filename"]
+                            filepath = os.path.join(LIBRARY_DIR, filename)
+                            
+                            # Get the file
+                            with open(filepath, "wb") as f:
+                                while True:
+                                    bytes_read = conn.recv(BUFFER_SIZE)     # read 4096 bytes from the socket (receive)
+                                    if bytes_read == b"DONE":               # if sender sends DONE signal then it is done.
+                                        self.library.append(filename)       # add to list
+                                        logging.info( "File with filename {} received and stored successfully.".format(filename) )
+                                        break
+                                    
+                                    f.write(bytes_read)                     # write to the file the bytes we just received
+                                conn.shutdown(1)
+                        
+                        elif data["func"] == "remove_file":
+                            filename = data["filename"]
+                            filepath = os.path.join(LIBRARY_DIR, filename)
+
+                            self.library.remove(filename)                   # remove from list
+                            os.remove(filepath)                             # remove file
+                            logging.info( "File with filename {} removed successfully.".format(filename) )
+                        
+                        # close connection
+                        conn.close()
+
+                    elif key.fileobj == socket_udp:
+                        (conn, addr) = key.fileobj.accept()
+                        data = conn.recv(BUFFER_SIZE)
+                        data = json.loads(data)
+
+                        if data["func"] == "add_ip":
+                            new_ip = data["ip"]
+                            self.ips.append(new_ip)
+                            logging.info( "New IP added to the list. Current IPs: {}".format(self.ips) )
+                        
+                        elif data["func"] == "remove_ip":
+                            ip = data["ip"]
+                            self.ips.remove(ip)
+                            logging.info( "IP removed from the list. Current IPs: {}".format(self.ips) )
+                        
+                        # close connection
+                        conn.close()
+
+
+        except KeyboardInterrupt:
+            logging.info("Server terminated from keyboard.")
+
+        finally:
+            # Close remaining sockets and unregister them
+            selector.unregister(socket_tcp)
+            socket_tcp.close()
+
+            selector.unregister(socket_udp)
+            socket_udp.close()
+
+            selector.close()               
         
-        s.close()
-        
-        print("Thread execution ended for node with port {}. Waiting for the last 5 seconds".format(self.port))
+        logging.info( "Thread execution ended for node. Waiting for the last 5 seconds" )
         
         time.sleep(5)
