@@ -122,6 +122,7 @@ class Node:
                         if data["func"] == "t_send_message":
                             receiver_ip = data["receiver_ip"]
                             message_socket = socket.socket()
+                            message_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                             message_socket.connect((receiver_ip, TCP_PORT))
                             message_socket.sendall( json.dumps({"func": "t_print_message", "text": "Hi delib user. I wanted to greet you fucker!"}).encode() )
                             message_socket.close()
@@ -135,14 +136,13 @@ class Node:
                         if data["func"] == "t_join_request":
                             new_ip = data["ip"]
                             
-                            message_socket = socket.socket()
-                            
                             for ip in self.ips:
                                 if not ip == IP_ADDRESS:
+                                    message_socket = socket.socket()
+                                    message_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                                     message_socket.connect((ip, TCP_PORT))
-                                    message_socket.sendto( json.dumps({"func": "t_save_ip", "ip": new_ip}).encode("utf-8") )
-                            
-                            message_socket.close()
+                                    message_socket.sendall( json.dumps({"func": "t_save_ip", "ip": new_ip}).encode("utf-8") )
+                                    message_socket.close()
 
                             self.ips.append(new_ip)
                             self.ips.sort()
@@ -157,14 +157,13 @@ class Node:
 
                         elif data["func"] == "t_leave_request":
 
-                            leave_socket = socket.socket()
-
                             for ip in self.ips:
                                 if not ip == IP_ADDRESS:
+                                    leave_socket = socket.socket()
+                                    leave_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                                     leave_socket.connect( (ip, TCP_PORT) )
                                     leave_socket.sendall( json.dumps({"func": "t_remove_ip", "ip": IP_ADDRESS}).encode("utf-8") )
-                            
-                            leave_socket.close()
+                                    leave_socket.close()
 
                             logging.info( "You have been removed from DS successfully." )
                             
