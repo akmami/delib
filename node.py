@@ -63,6 +63,8 @@ class Node:
 
             logging.info("Successfully joined to the DS. IPs: {}".format(self.ips))
 
+            socket_tcp.close()
+
 
     def run(self, t_sec=31536000):                                  # default end time is set to 1 year = 31536000
 
@@ -123,9 +125,21 @@ class Node:
                             message_socket.sendall( json.dumps({"func": "t_print_message", "text": "it works!"}).encode() )
                             message_socket.close()
                         
-                        if data["func"] == "t_join_request":
+                        if data["func"] == "t_save_ip":
                             new_ip = data["ip"]
                             self.ips.append(new_ip)
+                            self.ips.sort()
+                            logging.info( "New IP added to the list. Current IPs: {}".format(self.ips) )
+                            
+                        if data["func"] == "t_join_request":
+                            new_ip = data["ip"]
+                            
+                            for ip in self.ips:
+                                if not ip == IP_ADDRESS:
+                                    socket_tcp.sendto( {"func": "t_save_ip", "ip": new_ip}.encode("utf-8"), (ip, TCP_PORT) )
+                            
+                            self.ips.append(new_ip)
+                            self.ips.sort()
                             logging.info( "New IP added to the list. Current IPs: {}".format(self.ips) )
 
                         elif data["func"] == "t_leave_request":
