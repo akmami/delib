@@ -153,7 +153,7 @@ class Node:
                         elif data["func"] == "t_leave_request":
                             for ip in self.ips:
                                 if not ip == IP_ADDRESS and not ip == addr:
-                                    socket_tcp.sendto( json.dumps({"func": "t_remove_ip", "ip": IP_ADDRESS}).encode("utf-8"), (ip, UDP_PORT) )
+                                    socket_tcp.sendto( {"func": "t_remove_ip", "ip": IP_ADDRESS}.encode("utf-8"), (ip, TCP_PORT) )
                             logging.info( "You have been removed from DS successfully." )
                             
                             if os.path.isdir(LIBRARY_DIR):
