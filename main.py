@@ -13,6 +13,9 @@ def main():
         choice = input("> ")
 
         if choice == "1":
+            ip = input("Please enter one of the Node's IP address : ")
+            node = Node(ip)
+            node.run()
             break
 
         elif choice == "2":
