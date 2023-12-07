@@ -89,9 +89,10 @@ class Node:
         selector.register(socket_udp, selectors.EVENT_READ)
 
         t_end = time.time() + t_sec
+        done = False
 
         try:
-            while time.time() < t_end:
+            while not done and time.time() < t_end:
                 
                 events = selector.select()
 
@@ -152,7 +153,7 @@ class Node:
                         elif data["func"] == "t_leave_request":
                             for ip in self.ips:
                                 if not ip == IP_ADDRESS and not ip == addr:
-                                    socket_tcp.sendto( json.dumps({"func": "t_remove_ip", "ip": addr}).encode("utf-8"), (ip, UDP_PORT) )
+                                    socket_tcp.sendto( json.dumps({"func": "t_remove_ip", "ip": IP_ADDRESS}).encode("utf-8"), (ip, UDP_PORT) )
                             logging.info( "You have been removed from DS successfully." )
                             
                             if os.path.isdir(LIBRARY_DIR):
@@ -160,7 +161,11 @@ class Node:
                             if os.path.isdir(TEMP_DIR):
                                 shutil.rmtree(TEMP_DIR)
                             
+                            done = True
+                            
                             logging.info( "Local files deleted successfuly. See you." )
+
+                            break
                         
                         elif data["func"] == "t_store_file":
                             filename = data["filename"]
@@ -211,15 +216,13 @@ class Node:
         except KeyboardInterrupt:
             logging.info("Server terminated from keyboard.")
 
-        finally:
-            # Close remaining sockets and unregister them
-            selector.unregister(socket_tcp)
-            socket_tcp.close()
+        # Close remaining sockets and unregister them
+        selector.unregister(socket_tcp)
+        socket_tcp.close()
+        selector.unregister(socket_udp)
+        socket_udp.close()
 
-            selector.unregister(socket_udp)
-            socket_udp.close()
-
-            selector.close()               
+        selector.close()               
         
         logging.info( "Thread execution ended for node. Waiting for the last 5 seconds" )
         
