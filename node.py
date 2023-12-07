@@ -9,12 +9,13 @@ import logging
 import pyautogui
 
 
-gw = os.popen("ip -4 route show default").read().split()
-s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-s.connect((gw[2], 0))
-ipaddr = s.getsockname()[0]
-gateway = gw[2]
-s.close()
+import requests
+
+# Use a web service to get the public IP address
+response = requests.get('https://api64.ipify.org?format=json')
+PUBLIC_IP = response.json()['ip']
+
+logging.info( "The public IP address is {}".format(PUBLIC_IP) )
 
 
 BUFFER_SIZE = config("BUFFER_SIZE", cast=int)   # send 4096 bytes each time step
@@ -23,11 +24,12 @@ TCP_PORT = config("TCP_PORT", cast=int)
 UDP_PORT = config("UDP_PORT", cast=int)
 LIBRARY_DIR = config("LIBRARY_DIR")
 TEMP_DIR = config("TEMP")
+NETWORK_IP = config("NETWORK_IP")
 
 logging.getLogger().setLevel(logging.INFO)      # INFO logs enabled
 
 CWD = os.getcwd()                               # get current working directory
-IP_ADDRESS = ipaddr                             # get IP address
+IP_ADDRESS = PUBLIC_IP                          # get IP address
 LIBRARY_DIR = os.path.join(CWD, LIBRARY_DIR)    # get full directory for library folder
 TEMP_DIR = os.path.join(CWD, TEMP_DIR)          # get full directory for temp folder.
                                                 # this will be used to store temp files in case file transfer is needed
@@ -55,7 +57,7 @@ class Node:
             
             logging.info( "Binding to IP: {}".format(ip) )
 
-            socket_tcp.bind((ip, TCP_PORT))    
+            socket_tcp.connect((ip, TCP_PORT))    
 
             socket_tcp.sendall( json.dumps({"func": "t_join_request", "ip": IP_ADDRESS}).encode("utf-8") )
 
@@ -73,7 +75,7 @@ class Node:
         socket_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         socket_tcp.settimeout(0.2)                                           # set timeout to 0.2 seconds
         socket_tcp.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)     # if port was available, then it will reuse it
-        socket_tcp.bind(('0.0.0.0', TCP_PORT))
+        socket_tcp.bind((NETWORK_IP, TCP_PORT))
         socket_tcp.listen(3)                                                 # max number of requests can wait in the queue
 
         # Create UDP socket
@@ -81,7 +83,7 @@ class Node:
         socket_udp.settimeout(0.2)
         socket_udp.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)     # if port is not available, then it will reuse it
         socket_udp.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)     # enable broadcasting
-        socket_udp.bind(('0.0.0.0', UDP_PORT))
+        socket_udp.bind((NETWORK_IP, UDP_PORT))
 
         # Register TCP and UDP sockets to the selector
         selector.register(socket_tcp, selectors.EVENT_READ)
@@ -115,8 +117,14 @@ class Node:
                         # --------------------------------------------------------------------------------------------
                         # --------------------------------------------------------------------------------------------
                         if data["func"] == "t_print_message":
-                            
                             logging.info( "Message received from {}, message: {}".format(addr, data["text"]) )
+                        
+                        if data["func"] == "t_send_message":
+                            receiver_ip = data["receiver_ip"]
+                            message_socket = socket.socket()
+                            message_socket.connect((receiver_ip, TCP_PORT))
+                            message_socket.sendall( json.dumps({"func": "t_print_message", "text": "it works!"}).encode() )
+                            message_socket.close()
                         
                         if data["func"] == "t_join_request":
                             new_ip = data["ip"]
