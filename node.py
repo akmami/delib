@@ -72,7 +72,7 @@ class Node:
 
         # Create TCP socket
         socket_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        socket_tcp.settimeout(0.5)                                           # set timeout to 0.2 seconds
+        socket_tcp.settimeout(0.2)
         socket_tcp.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)     # if port was available, then it will reuse it
         socket_tcp.bind((NETWORK_IP, TCP_PORT))
         socket_tcp.listen(3)                                                 # max number of requests can wait in the queue
@@ -135,10 +135,15 @@ class Node:
                         if data["func"] == "t_join_request":
                             new_ip = data["ip"]
                             
+                            message_socket = socket.socket()
+                            
                             for ip in self.ips:
                                 if not ip == IP_ADDRESS:
-                                    socket_tcp.sendto( json.dumps({"func": "t_save_ip", "ip": new_ip}).encode("utf-8"), (ip, TCP_PORT) )
+                                    message_socket.connect((ip, TCP_PORT))
+                                    message_socket.sendto( json.dumps({"func": "t_save_ip", "ip": new_ip}).encode("utf-8") )
                             
+                            message_socket.close()
+
                             self.ips.append(new_ip)
                             self.ips.sort()
                             conn.sendall( json.dumps(self.ips).encode("utf-8") )
@@ -151,10 +156,16 @@ class Node:
                             logging.info( "IP removed from the list. Current IPs: {}".format(self.ips) )
 
                         elif data["func"] == "t_leave_request":
+
+                            leave_socket = socket.socket()
+
                             for ip in self.ips:
                                 if not ip == IP_ADDRESS:
-                                    logging.info( "ip1: {}, ip2: {}".format(IP_ADDRESS, ip) )
-                                    socket_tcp.sendto( json.dumps({"func": "t_remove_ip", "ip": IP_ADDRESS}).encode("utf-8"), (ip, TCP_PORT) )
+                                    leave_socket.connect( (ip, TCP_PORT) )
+                                    leave_socket.sendall( json.dumps({"func": "t_remove_ip", "ip": IP_ADDRESS}).encode("utf-8") )
+                            
+                            leave_socket.close()
+
                             logging.info( "You have been removed from DS successfully." )
                             
                             if os.path.isdir(LIBRARY_DIR):
