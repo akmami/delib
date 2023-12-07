@@ -16,17 +16,8 @@ def main():
             break
 
         elif choice == "2":
-            port = input("Please specify port (default 8000): ")
-            while True:
-                try:
-                    port = int(port)
-                except:
-                    print("Invalid port number provided. Please enter integer.")
-                    print("")
-                
-                node = Node(port=port, ips=[8001, 8002, 8003])
-                node.run()
-                break
+            node = Node()
+            node.run()
             break
         else:
             print("")
