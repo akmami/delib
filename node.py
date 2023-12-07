@@ -42,19 +42,21 @@ if not os.path.exists(TEMP_DIR):                # all temp items in node will be
 
 class Node:
     def __init__(self, ip=None):
-        self.ip = IP_ADDRESS
-        self.ips = []
+        self.ip = "0.0.0.0"
+        self.ips = [IP_ADDRESS]
         self.library = []
 
-        logging.info("New node created with IP: {} TCP port: {}, UDP port: {}".format(self.ip, TCP_PORT, UDP_PORT))
+        logging.info("New node created with IP: {} TCP port: {}, UDP port: {}".format(IP_ADDRESS, TCP_PORT, UDP_PORT))
 
         if ip is not None:
             socket_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            socket_tcp.settimeout(0.2)                                           # set timeout to 0.2 seconds
             socket_tcp.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)     # if port was available, then it will reuse it
-            socket_tcp.bind((self.ip, TCP_PORT))    
+            
+            logging.info( "Binding to IP: {}".format(ip) )
 
-            socket_tcp.send( json.dumps({"func": "t_join_request", "ip": self.ip}), (ip, TCP_PORT))
+            socket_tcp.bind((ip, TCP_PORT))    
+
+            socket_tcp.sendall( json.dumps({"func": "t_join_request", "ip": IP_ADDRESS}).encode("utf-8") )
 
             data = socket_tcp.recv(BUFFER_SIZE)
             self.ips = data.decode("utf-8")
@@ -122,8 +124,8 @@ class Node:
 
                         elif data["func"] == "t_leave_request":
                             for ip in self.ips:
-                                if not ip == self.ip:
-                                    socket_udp.sendto( {"func": "remove_ip", "ip": self.ip}.encode("utf-8"), (ip, UDP_PORT) )
+                                if not ip == IP_ADDRESS:
+                                    socket_udp.sendto( {"func": "remove_ip", "ip": IP_ADDRESS}.encode("utf-8"), (ip, UDP_PORT) )
                             logging.info( "You have been removed from DS successfully." )
                             
                             if os.path.isdir(LIBRARY_DIR):
