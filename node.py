@@ -13,6 +13,7 @@ gw = os.popen("ip -4 route show default").read().split()
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.connect((gw[2], 0))
 ipaddr = s.getsockname()[0]
+gateway = gw[2]
 s.close()
 
 
@@ -42,11 +43,11 @@ if not os.path.exists(TEMP_DIR):                # all temp items in node will be
 
 class Node:
     def __init__(self, ip=None):
-        self.ip = "0.0.0.0"
+        self.ip = IP_ADDRESS
         self.ips = [IP_ADDRESS]
         self.library = []
 
-        logging.info("New node created with IP: {} TCP port: {}, UDP port: {}".format(IP_ADDRESS, TCP_PORT, UDP_PORT))
+        logging.info("New node created with IP: {} TCP port: {}, UDP port: {}".format(self.ip, TCP_PORT, UDP_PORT))
 
         if ip is not None:
             socket_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -72,7 +73,7 @@ class Node:
         socket_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         socket_tcp.settimeout(0.2)                                           # set timeout to 0.2 seconds
         socket_tcp.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)     # if port was available, then it will reuse it
-        socket_tcp.bind((self.ip, TCP_PORT))
+        socket_tcp.bind(('0.0.0.0', TCP_PORT))
         socket_tcp.listen(3)                                                 # max number of requests can wait in the queue
 
         # Create UDP socket
@@ -80,7 +81,7 @@ class Node:
         socket_udp.settimeout(0.2)
         socket_udp.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)     # if port is not available, then it will reuse it
         socket_udp.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)     # enable broadcasting
-        socket_udp.bind((self.ip, UDP_PORT))
+        socket_udp.bind(('0.0.0.0', UDP_PORT))
 
         # Register TCP and UDP sockets to the selector
         selector.register(socket_tcp, selectors.EVENT_READ)
