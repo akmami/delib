@@ -122,7 +122,7 @@ class Node:
                             receiver_ip = data["receiver_ip"]
                             message_socket = socket.socket()
                             message_socket.connect((receiver_ip, TCP_PORT))
-                            message_socket.sendall( json.dumps({"func": "t_print_message", "text": "it works!"}).encode() )
+                            message_socket.sendall( json.dumps({"func": "t_print_message", "text": "Hi delib user. I wanted to greet you fucker!"}).encode() )
                             message_socket.close()
                         
                         if data["func"] == "t_save_ip":
@@ -140,12 +140,19 @@ class Node:
                             
                             self.ips.append(new_ip)
                             self.ips.sort()
+                            conn.sendall( json.dumps(self.ips).encode("utf-8") )
                             logging.info( "New IP added to the list. Current IPs: {}".format(self.ips) )
+                        
+                        elif data["func"] == "t_remove_ip":
+                            ip = data["ip"]
+                            self.ips.remove(ip)
+                            self.ips.sort()
+                            logging.info( "IP removed from the list. Current IPs: {}".format(self.ips) )
 
                         elif data["func"] == "t_leave_request":
                             for ip in self.ips:
-                                if not ip == IP_ADDRESS:
-                                    socket_udp.sendto( {"func": "remove_ip", "ip": IP_ADDRESS}.encode("utf-8"), (ip, UDP_PORT) )
+                                if not ip == IP_ADDRESS and not ip == addr:
+                                    socket_udp.sendto( {"func": "t_remove_ip", "ip": addr}.encode("utf-8"), (ip, UDP_PORT) )
                             logging.info( "You have been removed from DS successfully." )
                             
                             if os.path.isdir(LIBRARY_DIR):
@@ -195,6 +202,7 @@ class Node:
                         elif data["func"] == "b_remove_ip":
                             ip = data["ip"]
                             self.ips.remove(ip)
+                            self.ips.sort()
                             logging.info( "IP removed from the list. Current IPs: {}".format(self.ips) )
                         
                         # close connection
