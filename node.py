@@ -6,9 +6,6 @@ import shutil
 import json
 from decouple import config
 import logging
-import pyautogui
-
-
 import requests
 
 # Use a web service to get the public IP address
