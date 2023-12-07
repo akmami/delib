@@ -6,6 +6,14 @@ import shutil
 import json
 from decouple import config
 import logging
+import pyautogui
+
+
+gw = os.popen("ip -4 route show default").read().split()
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s.connect((gw[2], 0))
+ipaddr = s.getsockname()[0]
+s.close()
 
 
 BUFFER_SIZE = config("BUFFER_SIZE", cast=int)   # send 4096 bytes each time step
@@ -18,8 +26,7 @@ TEMP_DIR = config("TEMP")
 logging.getLogger().setLevel(logging.INFO)      # INFO logs enabled
 
 CWD = os.getcwd()                               # get current working directory
-HOSTNAME = socket.gethostname()                 # get hostname 
-IP_ADDRESS = socket.gethostbyname(HOSTNAME)     # get IP address
+IP_ADDRESS = ipaddr                             # get IP address
 LIBRARY_DIR = os.path.join(CWD, LIBRARY_DIR)    # get full directory for library folder
 TEMP_DIR = os.path.join(CWD, TEMP_DIR)          # get full directory for temp folder.
                                                 # this will be used to store temp files in case file transfer is needed
@@ -34,12 +41,25 @@ if not os.path.exists(TEMP_DIR):                # all temp items in node will be
 
 
 class Node:
-    def __init__(self):
+    def __init__(self, ip=None):
         self.ip = IP_ADDRESS
         self.ips = []
         self.library = []
 
         logging.info("New node created with IP: {} TCP port: {}, UDP port: {}".format(self.ip, TCP_PORT, UDP_PORT))
+
+        if ip is not None:
+            socket_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            socket_tcp.settimeout(0.2)                                           # set timeout to 0.2 seconds
+            socket_tcp.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)     # if port was available, then it will reuse it
+            socket_tcp.bind((self.ip, TCP_PORT))    
+
+            socket_tcp.send( json.dumps({"func": "t_join_request", "ip": self.ip}), (ip, TCP_PORT))
+
+            data = socket_tcp.recv(BUFFER_SIZE)
+            self.ips = data.decode("utf-8")
+
+            logging.info("Successfully joined to the DS. IPs: {}".format(self.ips))
 
 
     def run(self, t_sec=31536000):                                  # default end time is set to 1 year = 31536000
@@ -68,6 +88,7 @@ class Node:
 
         try:
             while time.time() < t_end:
+                
                 events = selector.select()
 
                 for key, _ in events:
@@ -90,14 +111,21 @@ class Node:
                         # execute requested func
                         # --------------------------------------------------------------------------------------------
                         # --------------------------------------------------------------------------------------------
-                        if data["func"] == "print_message":
+                        if data["func"] == "t_print_message":
+                            
                             logging.info( "Message received from {}, message: {}".format(addr, data["text"]) )
+                        
+                        if data["func"] == "t_join_request":
+                            new_ip = data["ip"]
+                            self.ips.append(new_ip)
+                            logging.info( "New IP added to the list. Current IPs: {}".format(self.ips) )
 
-                        elif data["func"] == "leave":
+                        elif data["func"] == "t_leave_request":
                             for ip in self.ips:
-                                socket_udp.sendto( {"func": "remove_ip", "ip": self.ip}.encode("utf-8"), (ip, UDP_PORT) )
+                                if not ip == self.ip:
+                                    socket_udp.sendto( {"func": "remove_ip", "ip": self.ip}.encode("utf-8"), (ip, UDP_PORT) )
                             logging.info( "You have been removed from DS successfully." )
-
+                            
                             if os.path.isdir(LIBRARY_DIR):
                                 shutil.rmtree(LIBRARY_DIR)
                             if os.path.isdir(TEMP_DIR):
@@ -105,7 +133,7 @@ class Node:
                             
                             logging.info( "Local files deleted successfuly. See you." )
                         
-                        elif data["func"] == "store_file":
+                        elif data["func"] == "t_store_file":
                             filename = data["filename"]
                             filepath = os.path.join(LIBRARY_DIR, filename)
                             
@@ -121,7 +149,7 @@ class Node:
                                     f.write(bytes_read)                     # write to the file the bytes we just received
                                 conn.shutdown(1)
                         
-                        elif data["func"] == "remove_file":
+                        elif data["func"] == "t_remove_file":
                             filename = data["filename"]
                             filepath = os.path.join(LIBRARY_DIR, filename)
 
@@ -131,25 +159,24 @@ class Node:
                         
                         # close connection
                         conn.close()
-
+ 
                     elif key.fileobj == socket_udp:
                         (conn, addr) = key.fileobj.accept()
                         data = conn.recv(BUFFER_SIZE)
                         data = json.loads(data)
 
-                        if data["func"] == "add_ip":
+                        if data["func"] == "b_add_ip":
                             new_ip = data["ip"]
                             self.ips.append(new_ip)
                             logging.info( "New IP added to the list. Current IPs: {}".format(self.ips) )
                         
-                        elif data["func"] == "remove_ip":
+                        elif data["func"] == "b_remove_ip":
                             ip = data["ip"]
                             self.ips.remove(ip)
                             logging.info( "IP removed from the list. Current IPs: {}".format(self.ips) )
                         
                         # close connection
                         conn.close()
-
 
         except KeyboardInterrupt:
             logging.info("Server terminated from keyboard.")
