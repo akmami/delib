@@ -226,6 +226,17 @@ class Node:
 
         except KeyboardInterrupt:
             logging.info("Server terminated from keyboard.")
+            
+            for ip in self.ips:
+                if not ip == IP_ADDRESS:
+                    leave_socket = socket.socket()
+                    leave_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                    leave_socket.connect( (ip, TCP_PORT) )
+                    leave_socket.sendall( json.dumps({"func": "t_remove_ip", "ip": IP_ADDRESS}).encode("utf-8") )
+                    leave_socket.close()
+
+            logging.info( "You have been removed from DS successfully." )
+            
 
         # Close remaining sockets and unregister them
         selector.unregister(socket_tcp)
