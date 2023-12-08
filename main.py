@@ -1,6 +1,6 @@
 from node import Node
-import subprocess
-import sys 
+import platform
+import subprocess 
 
 def main():
     print("Welcome to Online Library Catalog Stored in Decentralised Network (delib)")
@@ -18,14 +18,20 @@ def main():
             node = Node(ip)
 
             # Start client program in seperate window
-            script_path = "client.py"
-            if sys.platform.startswith('win'):
-                command = ["start", "cmd", "/k", "python3", script_path]
-            else:
-                command = ["x-terminal-emulator", "-e", "python3", script_path]
+            command = "python3 client.py"
+            
+            system = platform.system()
 
-            # Run the script in a separate window
-            subprocess.run(command)
+            if system == "Linux":
+                terminal_command = ["x-terminal-emulator", "-e",  command]
+            elif system == "Darwin": 
+                terminal_command = ["open", "-a", "Terminal.app", command]
+            elif system == "Windows":
+                terminal_command = ["start", "cmd", "/c", command]
+            else:
+                raise OSError(f"Unsupported operating system: {system}")
+            
+            subprocess.Popen(terminal_command, start_new_session=True)
 
             # Start the server program in this window
             node.run()
@@ -35,14 +41,20 @@ def main():
             node = Node()
             
             # Start client program in seperate window
-            script_path = "client.py"
-            if sys.platform.startswith('win'):
-                command = ["start", "cmd", "/k", "python3", script_path]
-            else:
-                command = ["x-terminal-emulator", "-e", "python3", script_path]
+            command = "python3 client.py"
+            
+            system = platform.system()
 
-            # Run the script in a separate window
-            subprocess.run(command)
+            if system == "Linux":
+                terminal_command = ["x-terminal-emulator", "-e",  command]
+            elif system == "Darwin": 
+                terminal_command = ["open", "-a", "Terminal.app", command]
+            elif system == "Windows":
+                terminal_command = ["start", "cmd", "/c", command]
+            else:
+                raise OSError(f"Unsupported operating system: {system}")
+            
+            subprocess.Popen(terminal_command, start_new_session=True)
             
             # Start the server program in this window
             node.run()
