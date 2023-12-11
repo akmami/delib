@@ -24,22 +24,13 @@ def send(filepath, sender_ip, sender_port, receiver_ip, receiver_port):
     
     filename = filepath.split('/')[-1]    # This is test file. Please either copy this to main directory ob delib project or change something else
     filesize = os.path.getsize(filepath)
+
+    with open(filepath, "r") as f:
+        dummy = f.read(BUFFER_SIZE)
     
-    data = {"func": "t_store_file", "filename": filename, "receiver_ip": receiver_ip, "receiver_port": receiver_port}
-    print(data)
+    data = {"func": "t_store_file", "filename": filename, "receiver_ip": receiver_ip, "receiver_port": receiver_port, "data": dummy}
+    print(dummy) 
     s.sendall( json.dumps(data).encode() )
-
-
-    print("sending {}  bytes {} size of to {}:{}".format(filepath, filesize, receiver_ip, receiver_port) )    
-    
-    with open(filepath, "rb") as f:
-        
-        while True:
-            bytes_read = f.read(BUFFER_SIZE)
-            if not bytes_read:          # if file transmitting is done
-                break         
-            s.send(bytes_read)
-        s.shutdown(1)                   # default signal to shutdown file send/receive
     s.close()
 
 
