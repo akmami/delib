@@ -1,5 +1,6 @@
-# program related files
+# program related files and dirs
 data
+library
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
