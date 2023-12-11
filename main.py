@@ -1,6 +1,7 @@
 from node import Node
 import platform
 import subprocess 
+import sys
 
 def main():
     print("Welcome to Online Library Catalog Stored in Decentralised Network (delib)")
@@ -31,7 +32,7 @@ def main():
             else:
                 raise OSError(f"Unsupported operating system: {system}")
             
-            subprocess.Popen(terminal_command, start_new_session=True)
+            subprocess.Popen(terminal_command, start_new_session=True, shell=True)
 
             # Start the server program in this window
             node.run()
@@ -41,20 +42,20 @@ def main():
             node = Node()
             
             # Start client program in seperate window
-            command = "python3 client.py"
+            arguments = "client.py"
             
             system = platform.system()
 
             if system == "Linux":
-                terminal_command = ["x-terminal-emulator", "-e",  command]
+                terminal_command = ["x-terminal-emulator", "-e", sys.executable, arguments]
             elif system == "Darwin": 
-                terminal_command = ["open", "-a", "Terminal.app", command]
+                terminal_command = ["open", "-a", "Terminal.app", sys.executable, arguments]
             elif system == "Windows":
-                terminal_command = ["start", "cmd", "/c", command]
+                terminal_command = ["start", "cmd", "/k", sys.executable, arguments]
             else:
                 raise OSError(f"Unsupported operating system: {system}")
             
-            subprocess.Popen(terminal_command, start_new_session=True)
+            subprocess.Popen(terminal_command, start_new_session=True, shell=True)
             
             # Start the server program in this window
             node.run()
