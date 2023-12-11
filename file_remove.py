@@ -27,7 +27,7 @@ def remove(filepath, sender_ip, sender_port, receiver_ip, receiver_port):
     data = {"func": "t_remove_file", "filename": filepath, "receiver_ip": receiver_ip, "receiver_port": receiver_port}
     s.sendall( json.dumps(data).encode() )
     
-    print("sending {}  bytes to {}:{}".format(filepath, receiver_ip, receiver_port) )    
+    print("sending {} to {}:{}".format(filepath, receiver_ip, receiver_port) )    
     s.shutdown(1)                   # default signal to shutdown file send/receive
     s.close()
 

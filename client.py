@@ -67,7 +67,11 @@ def main():
             #Adding code here
             print("Please enter the path of the file you want to read:")
             file_path = input()
-            read_file(file_path, public_ip, 8000, "139.179.103.205", 8000)
+            content = read_file(file_path, public_ip, 8000, "139.179.103.205", 8000)
+
+            print("\n------------------------------------------------------------")
+            print(content)
+            print("\n------------------------------------------------------------")
    
             
         elif choice == "4":

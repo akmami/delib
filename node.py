@@ -196,17 +196,7 @@ class Node:
                         
                         elif data["func"] == "t_read_file":
                             filename = data["filename"]
-                            filepath = os.path.join(LIBRARY_DIR, filename)
-                            
-                            # Get the file
-                            print("\n------------------------------------------------------------")
-                            with open(filepath, "r") as f:
-                                file_line = f.read()     # read 4096 bytes from the socket (receive)
-                                conn.shutdown(1)
-                            
-                            # Display the result
-                            print(file_line)
-                            print("\n------------------------------------------------------------")
+
                                     
                         
                         elif data["func"] == "t_remove_file":
