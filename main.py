@@ -56,7 +56,7 @@ def main():
                 raise OSError(f"Unsupported operating system: {system}")
             
             subprocess.Popen(terminal_command, start_new_session=True, shell=True)
-            
+  
             # Start the server program in this window
             node.run()
             break

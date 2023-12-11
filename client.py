@@ -4,6 +4,9 @@ import socket
 from pathlib import Path
 from decouple import config
 import json
+from send import send
+from file_remove import remove
+from file_read import read_file
 
     
 
@@ -30,16 +33,50 @@ def main():
 
         if choice == "1":
             #Adding code here
-            print("Give file path:")
-            read_file = input()
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.connect( ("127.0.1.1", TCP_PORT) )
-            s.sendall( json.dumps( {"func": "t_store_file", "filename": read_file} ).encode() )
-            s.close()
+            print("Please enter the path of the file you want to add:")
+            file_path = input()
+            if os.path.exists(file_path):
+                try:
+                    with open(file_path, 'rb') as file:
+                        file_data = file.read()
+            
+                    send(file_path, public_ip, 8000, "139.179.103.205", 8000)
+                except PermissionError:
+                    print(f"Permission error: Unable to add '{file_path}'.")
+                except Exception as e:
+                    print(f"An error occurred: {e}")  
+            else:
+                print("This file does not exist!")
+
+
+
         elif choice == "2":
-            pass
+            #Adding code here
+            print("Please enter the path of the file you want to delete:")
+            file_path = input()
+            if os.path.exists(file_path):
+                try:
+                    remove(file_path, public_ip, 8000, "139.179.103.205", 8000)
+                except PermissionError:
+                    print(f"Permission error: Unable to delete '{file_path}'.")
+                except Exception as e:
+                    print(f"An error occurred: {e}") 
+            else:
+                print("This file does not exist!")
         elif choice == "3":
-            pass
+            #Adding code here
+            print("Please enter the path of the file you want to read:")
+            file_path = input()
+            if os.path.exists(file_path):
+                try:
+                    read_file(file_path, public_ip, 8000, "139.179.103.205", 8000)
+                except PermissionError:
+                    print(f"Permission error: Unable to delete '{file_path}'.")
+                except Exception as e:
+                    print(f"An error occurred: {e}") 
+            else:
+                print("This file does not exist!")
+            
         elif choice == "4":
             pass
         else:
