@@ -1,0 +1,2 @@
+Hi this is a.txt stored in temp.
+And this is my second line.
