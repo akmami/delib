@@ -19,16 +19,16 @@ def main():
             node = Node(ip)
 
             # Start client program in seperate window
-            command = "python3 client.py"
+            arguments = "client.py"
             
             system = platform.system()
 
             if system == "Linux":
-                terminal_command = ["x-terminal-emulator", "-e",  command]
+                terminal_command = ["x-terminal-emulator", "-e", sys.executable, arguments]
             elif system == "Darwin": 
-                terminal_command = ["open", "-a", "Terminal.app", command]
+                terminal_command = ["open", "-a", "Terminal.app", sys.executable, arguments]
             elif system == "Windows":
-                terminal_command = ["start", "cmd", "/c", command]
+                terminal_command = ["start", "cmd", "/k", sys.executable, arguments]
             else:
                 raise OSError(f"Unsupported operating system: {system}")
             
