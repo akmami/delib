@@ -58,11 +58,11 @@ def main():
             else:
                 raise OSError(f"Unsupported operating system: {system}")
             
-            if system == "Linux":
+            if system == "Linux" or system == "Darwin":
                 subprocess.Popen(terminal_command, start_new_session=True)
             elif system == "Windows":
                 subprocess.Popen(terminal_command, start_new_session=True, shell=True)
-                
+
             # Start the server program in this window
             node.run()
             break
