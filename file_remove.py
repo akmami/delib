@@ -18,28 +18,20 @@ args = parser.parse_args()
 BUFFER_SIZE = config("BUFFER_SIZE", cast=int)
 
 
-def send(filepath, sender_ip, sender_port, receiver_ip, receiver_port):
+def remove(filepath, sender_ip, sender_port, receiver_ip, receiver_port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
-    s.connect((receiver_ip, sender_port))
+    s.connect((sender_ip, sender_port))
     
     filename = filepath.split('/')[-1]    # This is test file. Please either copy this to main directory ob delib project or change something else
+    print(filename)
     filesize = os.path.getsize(filepath)
-    
-    data = {"func": "t_store_file", "filename": filename, "receiver_ip": receiver_ip, "receiver_port": receiver_port}
-    print(data)
+    print(filepath)
+
+    data = {"func": "t_remove_file", "filename": filename, "receiver_ip": receiver_ip, "receiver_port": receiver_port}
     s.sendall( json.dumps(data).encode() )
-
-
-    print("sending {}  bytes {} size of to {}:{}".format(filepath, filesize, receiver_ip, receiver_port) )    
     
-    with open(filepath, "rb") as f:
-        
-        while True:
-            bytes_read = f.read(BUFFER_SIZE)
-            if not bytes_read:          # if file transmitting is done
-                break         
-            s.send(bytes_read)
-        s.shutdown(1)                   # default signal to shutdown file send/receive
+    print("sending {}  bytes {} size of to {}:{}".format(filepath, filesize, receiver_ip, receiver_port) )    
+    s.shutdown(1)                   # default signal to shutdown file send/receive
     s.close()
 
 

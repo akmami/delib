@@ -101,8 +101,11 @@ class Node:
                     if key.fileobj == socket_tcp:           # messages received by TCP protocol
 
                         (conn, addr) = key.fileobj.accept()
-                        data = conn.recv(BUFFER_SIZE)       # receive data from client
-                        data = json.loads(data)
+                        data_all = conn.recv(BUFFER_SIZE)       # receive data from client
+                        data = data_all.split(b'}')[0] + b'}'
+                        file_data = data_all.split(b'}')[1]
+                        data= json.loads(data)
+                        
 
                         if "func" not in data:
                             logging.warning("Request received which does not contain 'func' tag.")
@@ -124,7 +127,7 @@ class Node:
                             message_socket = socket.socket()
                             message_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                             message_socket.connect((receiver_ip, TCP_PORT))
-                            message_socket.sendall( json.dumps({"func": "t_print_message", "text": "Hi delib user. I wanted to greet you fucker!"}).encode() )
+                            message_socket.sendall( json.dumps({"func": "t_print_message", "text": "Hi delib user. I wanted to greet you!"}).encode() )
                             message_socket.close()
                         
                         if data["func"] == "t_save_ip":
@@ -184,15 +187,26 @@ class Node:
                             
                             # Get the file
                             with open(filepath, "wb") as f:
-                                while True:
-                                    bytes_read = conn.recv(BUFFER_SIZE)     # read 4096 bytes from the socket (receive)
-                                    if bytes_read == b"DONE":               # if sender sends DONE signal then it is done.
-                                        self.library.append(filename)       # add to list
-                                        logging.info( "File with filename {} received and stored successfully.".format(filename) )
-                                        break
-                                    
-                                    f.write(bytes_read)                     # write to the file the bytes we just received
+                                self.library.append(filename)       # add to list
+                                logging.info( "File with filename {} received and stored successfully.".format(filename) )
+                                #file_data= file_data.deco
+                                f.write(file_data)                     # write to the file the bytes we just received
                                 conn.shutdown(1)
+                        
+                        elif data["func"] == "t_read_file":
+                            filename = data["filename"]
+                            filepath = os.path.join(LIBRARY_DIR, filename)
+                            
+                            # Get the file
+                            print("\n------------------------------------------------------------")
+                            with open(filepath, "r") as f:
+                                file_line = f.read()     # read 4096 bytes from the socket (receive)
+                                conn.shutdown(1)
+                            
+                            # Display the result
+                            print(file_line)
+                            print("\n------------------------------------------------------------")
+                                    
                         
                         elif data["func"] == "t_remove_file":
                             filename = data["filename"]
