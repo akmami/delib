@@ -29,7 +29,6 @@ def send(filepath, sender_ip, sender_port, receiver_ip, receiver_port):
         dummy = f.read(BUFFER_SIZE)
     
     data = {"func": "t_store_file", "filename": filename, "receiver_ip": receiver_ip, "receiver_port": receiver_port, "data": dummy}
-    print(dummy) 
     s.sendall( json.dumps(data).encode() )
     s.close()
 

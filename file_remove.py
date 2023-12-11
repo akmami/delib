@@ -20,17 +20,14 @@ BUFFER_SIZE = config("BUFFER_SIZE", cast=int)
 
 def remove(filepath, sender_ip, sender_port, receiver_ip, receiver_port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
-    s.connect((sender_ip, sender_port))
+    s.connect((receiver_ip, sender_port))
     
-    filename = filepath.split('/')[-1]    # This is test file. Please either copy this to main directory ob delib project or change something else
-    print(filename)
-    filesize = os.path.getsize(filepath)
-    print(filepath)
 
-    data = {"func": "t_remove_file", "filename": filename, "receiver_ip": receiver_ip, "receiver_port": receiver_port}
+
+    data = {"func": "t_remove_file", "filename": filepath, "receiver_ip": receiver_ip, "receiver_port": receiver_port}
     s.sendall( json.dumps(data).encode() )
     
-    print("sending {}  bytes {} size of to {}:{}".format(filepath, filesize, receiver_ip, receiver_port) )    
+    print("sending {}  bytes to {}:{}".format(filepath, receiver_ip, receiver_port) )    
     s.shutdown(1)                   # default signal to shutdown file send/receive
     s.close()
 

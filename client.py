@@ -67,15 +67,8 @@ def main():
             #Adding code here
             print("Please enter the path of the file you want to read:")
             file_path = input()
-            if os.path.exists(file_path):
-                try:
-                    read_file(file_path, public_ip, 8000, "139.179.103.205", 8000)
-                except PermissionError:
-                    print(f"Permission error: Unable to delete '{file_path}'.")
-                except Exception as e:
-                    print(f"An error occurred: {e}") 
-            else:
-                print("This file does not exist!")
+            read_file(file_path, public_ip, 8000, "139.179.103.205", 8000)
+   
             
         elif choice == "4":
             pass
