@@ -103,7 +103,6 @@ class Node:
 
                         (conn, addr) = key.fileobj.accept()
                         data_all = conn.recv(BUFFER_SIZE)       # receive data from client
-                        print(data_all)
                         #data = data_all.split(b'}')[0] + b'}'
                         #file_data = data_all.split(b'}')[1]
                         data= json.loads(data_all)
@@ -186,6 +185,12 @@ class Node:
                         elif data["func"] == "t_store_file":
                             filename = data["filename"]
                             file_data = data["data"]
+
+                            if "/" in filename:
+                                filename = filename.split('/')[-1] 
+                            elif "\\" in filename:  
+                                filename = filename.split('\\')[-1] 
+                            
                             filepath = os.path.join(LIBRARY_DIR, filename)
                             
                             # Get the file
@@ -198,8 +203,9 @@ class Node:
                         elif data["func"] == "t_read_file":
                             filename = data["filename"]
                             receiver_ip = data["receiver_ip"]
+                            filepath = os.path.join(LIBRARY_DIR, filename)
 
-                            file_send(filename, PUBLIC_IP, 8000, receiver_ip, 8000)
+                            file_send(filepath, PUBLIC_IP, 8000, receiver_ip, 8000)
 
                                     
                         
