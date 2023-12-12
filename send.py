@@ -22,7 +22,7 @@ def send(filepath, sender_ip, sender_port, receiver_ip, receiver_port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
     s.connect((receiver_ip, sender_port))
     
-    filename = filepath.split('/')[-1]    # This is test file. Please either copy this to main directory ob delib project or change something else
+    filename = filepath.split('/')[-1]    
     filesize = os.path.getsize(filepath)
 
     with open(filepath, "r") as f:
