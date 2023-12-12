@@ -4,8 +4,7 @@ import socket
 from pathlib import Path
 from decouple import config
 import json
-from send import send
-from file_remove import remove
+from file_send import file_send
 from file_read import read_file
 
     
@@ -38,10 +37,10 @@ def main():
             print("Please enter one IP part of delib:")
             user_ip = input()
 
-            content = read_file(file_path, public_ip, 8000, user_ip, 8000)
+            read_file(file_path, public_ip, 8000, user_ip, 8000)
 
             print("\n------------------------------------------------------------")
-            print(content)
+            
             print("\n------------------------------------------------------------")
    
             

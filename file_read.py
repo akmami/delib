@@ -34,20 +34,13 @@ def read_file(filepath, sender_ip, sender_port, receiver_ip, receiver_port):
     file_path = os.path.join(LIBRARY_DIR, filename)
     print(file_path)
 
-    data = {"func": "t_read_file", "filename": filepath, "receiver_ip": receiver_ip, "receiver_port": receiver_port}
+    data = {"func": "t_read_file", "filename": filepath, "receiver_ip": sender_ip, "receiver_port": receiver_port}
     s.sendall( json.dumps(data).encode() )
-    
-    # Get the file
-    with open(file_path, "r") as f:
-        file_line = f.read()     # read 4096 bytes from the socket (receive)
-    
+
     print("sending {} to {}:{}".format(filepath, receiver_ip, receiver_port) )    
     s.shutdown(1)                   # default signal to shutdown file send/receive
     s.close()
-
-    return file_line
     
-
 
 
 #-------------------------------------------------------------------------------------------

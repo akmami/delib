@@ -7,6 +7,7 @@ import json
 from decouple import config
 import logging
 import requests
+from file_send import file_send
 
 # Use a web service to get the public IP address
 response = requests.get('https://api64.ipify.org?format=json')
@@ -196,6 +197,9 @@ class Node:
                         
                         elif data["func"] == "t_read_file":
                             filename = data["filename"]
+                            receiver_ip = data["receiver_ip"]
+
+                            file_send(filename, PUBLIC_IP, 8000, receiver_ip, 8000)
 
                                     
                         
