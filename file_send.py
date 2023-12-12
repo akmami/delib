@@ -22,6 +22,11 @@ def file_send(filepath, sender_ip, sender_port, receiver_ip, receiver_port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
     s.connect((receiver_ip, sender_port))
     
+    filename = filepath.split('/')[-1] 
+
+    
+
+    print("\t FILENAME: ", filename)
 
     with open(filepath, "r") as f:
         dummy = f.read(BUFFER_SIZE)
