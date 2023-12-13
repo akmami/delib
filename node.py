@@ -34,6 +34,8 @@ LIBRARY_DIR = os.path.join(CWD, LIBRARY_DIR)    # get full directory for library
 TEMP_DIR = os.path.join(CWD, TEMP_DIR)          # get full directory for temp folder.
                                                 # this will be used to store temp files in case file transfer is needed
 
+num_voters = 0
+num_yes = 0
 
 if not os.path.exists(LIBRARY_DIR):             # all items in node will be stored under library folder
     os.mkdir(LIBRARY_DIR)
@@ -150,7 +152,7 @@ class Node:
                                 ask_vote_for_cand_node(new_ip, self.ip, 8000, recv_ip, 8000)
                             
                             # own vote
-                            num_votes += 1
+                            num_voters += 1
                             num_yes += 1    # auto yes
 
                             # voting process end
