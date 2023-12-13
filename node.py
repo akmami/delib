@@ -146,8 +146,8 @@ class Node:
                             num_voters = 0
                             num_yes = 0
 
-                            for recv_ip in self.ips
-                                ask_vote_for_cand_node(new_ip, ip, 8000, recv_ip, 8000)
+                            for recv_ip in self.ips:
+                                ask_vote_for_cand_node(new_ip, self.ip, 8000, recv_ip, 8000)
                             # voting process end
 
                             if num_voters / num_yes >= 2:
@@ -237,7 +237,7 @@ class Node:
                         elif data["func"] == "t_ask_vote_cand_node":
                             print( "You have been asked a vote to add a node with IP {} - your answer is automatically yes haha.".format(data["cand_node_ip"]) )
                             vote = True
-                            send_vote(vote, data["cand_node_ip"], ip, 8000, data["sender_ip"], 8000)
+                            send_vote(vote, data["cand_node_ip"], self.ip, 8000, data["sender_ip"], 8000)
 
 
                         elif data["func"] == "t_send_vote":
