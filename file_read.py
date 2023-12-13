@@ -26,7 +26,7 @@ args = parser.parse_args()
 BUFFER_SIZE = config("BUFFER_SIZE", cast=int)
 
 
-def read_file(filepath, sender_ip, sender_port, receiver_ip, receiver_port):
+def read_file(filepath, sender_ip, sender_port, receiver_ip, receiver_port, query_index):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
     s.connect((receiver_ip, sender_port))
     
@@ -34,7 +34,7 @@ def read_file(filepath, sender_ip, sender_port, receiver_ip, receiver_port):
     file_path = os.path.join(LIBRARY_DIR, filename)
     print(file_path)
 
-    data = {"func": "t_read_file", "filename": filepath, "receiver_ip": sender_ip, "receiver_port": receiver_port}
+    data = {"func": "t_read_file", "filename": filepath, "receiver_ip": sender_ip, "receiver_port": receiver_port, "query_index": query_index}
     s.sendall( json.dumps(data).encode() )
 
     print("sending {} to {}:{}".format(filepath, receiver_ip, receiver_port) )    

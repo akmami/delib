@@ -13,6 +13,7 @@ from consensus_check import send_vote
 from query import hash_file_name
 from typing import Final
 import ipaddress
+from file_read import read_file
 
 
 # Use a web service to get the public IP address
@@ -212,11 +213,10 @@ class Node:
                             logging.info( "Local files deleted successfuly. See you." )
 
                             break
-                        elif data["func"] == ["t_store_msg"]:
+                        elif data["func"] == "t_store_msg":
                             filename = data["filename"]
                             file_data = data["data"]
                             q_value = hash_file_name(filename)%MAX_NODE
-                            print(q_value)
 
                             #Sort nodes list
                             # Convert IP addresses to integers
@@ -224,9 +224,6 @@ class Node:
 
                             # Sort the list of IP addresses based on their integer values
                             nodes = [ip for _, ip in sorted(zip(ip_integers, self.ips))]
-
-                            for i in nodes:
-                                print(i, " - ", int(ipaddress.IPv4Address(i))%MAX_NODE)
 
                             
                             #Check where file is supposed to be
@@ -239,10 +236,8 @@ class Node:
                                 else:
                                     query_nodes = nodes
                                     break
-                            print(filename)
-                            print(PUBLIC_IP)
-                            print(query_nodes[0])
-                            file_send(filename, PUBLIC_IP, 8000, query_nodes[0], 8000, 0, data["file_content"])
+                        
+                            file_send(filename, PUBLIC_IP, 8000, query_nodes[0], 8000, 0, data["data"])
                             conn.shutdown(1)
                             break
                         
@@ -299,9 +294,15 @@ class Node:
                                     query_nodes = nodes
                                     break
 
-                            print("File is in node: ", query_nodes[0])
-                            print(len(query_nodes))
-
+                            if(data["query_index"]< len(self.ips)):
+                                if(query_nodes[data["query_index"]]== data["receiver_ip"]):
+                                    file_send(filename, data["sender_ip"], 8000, query_nodes[data["query_index"]], 8000, data["query_index"], data["data"])
+                                else:
+                                    read_file(filename, data["sender_ip"], 8000, query_nodes[data["query_index"]+1], 8000, ["query_index"]+1)
+                            else:
+                                print("End of query. File not found!")
+                            conn.shutdown(1)
+                            break
                             
                             """"
                             filepath = os.path.join(LIBRARY_DIR, filename)
