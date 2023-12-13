@@ -149,7 +149,8 @@ class Node:
                             num_yes = 0
 
                             for recv_ip in self.ips:
-                                ask_vote_for_cand_node(new_ip, self.ip, 8000, recv_ip, 8000)
+                                if not recv_ip == self.ip:
+                                    ask_vote_for_cand_node(new_ip, self.ip, 8000, recv_ip, 8000)
                             
                             # own vote
                             num_voters += 1
