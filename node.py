@@ -293,9 +293,9 @@ class Node:
                             print(filename)
                             print(data["query_index"])
 
-                            if(os.path.exists(filename)):
+                            if(os.path.exists(filepath)):
                                 # Open a file in read mode ('r' stands for read)
-                                with open(filename, 'r') as file:
+                                with open(filepath, 'r') as file:
                                     # Read the entire content of the file
                                     content = file.read()
                                     send_condition=1
