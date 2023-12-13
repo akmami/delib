@@ -34,7 +34,7 @@ def main():
         
         if choice == "1":
             #Adding code here
-            print("Please enter the path of the file you want to read:")
+            print("Please enter the name of the file you want to read:")
             file_path = input()
             print("Please enter one IP part of delib:")
             user_ip = input()

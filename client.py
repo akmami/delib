@@ -56,24 +56,17 @@ def main():
 
         elif choice == "2":
             #Adding code here
-            print("Please enter the path of the file you want to delete:")
+            print("Please enter the name of the file you want to delete:")
             file_path = input()
             print("Please enter one IP part of delib:")
             user_ip = input()
 
-            if os.path.exists(file_path):
-                try:
-                    remove(file_path, public_ip, 8000, user_ip, 8000)
-                except PermissionError:
-                    print(f"Permission error: Unable to delete '{file_path}'.")
-                except Exception as e:
-                    print(f"An error occurred: {e}") 
-            else:
-                print("This file does not exist!")
+            remove(file_path, public_ip, 8000, user_ip, 8000)
+
 
         elif choice == "3":
             #Adding code here
-            print("Please enter the path of the file you want to read:")
+            print("Please enter the name of the file you want to read:")
             file_path = input()
             print("Please enter one IP part of delib:")
             user_ip = input()
