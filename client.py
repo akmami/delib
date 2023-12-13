@@ -7,7 +7,8 @@ import json
 from file_send import file_send
 from file_remove import remove
 from file_read import read_file
-
+import sys
+import time
     
 
 #Adding code here
@@ -69,6 +70,7 @@ def main():
                     print(f"An error occurred: {e}") 
             else:
                 print("This file does not exist!")
+
         elif choice == "3":
             #Adding code here
             print("Please enter the path of the file you want to read:")
@@ -78,13 +80,10 @@ def main():
 
             read_file(file_path, public_ip, 8000, user_ip, 8000)
 
-            print("\n------------------------------------------------------------")
-            
-            print("\n------------------------------------------------------------")
-   
-            
         elif choice == "4":
-            pass
+                print("Exiting...")
+                time.sleep(2)
+                sys.exit()
         else:
             print("Invalid argument provided. Please select one of the options that is offered.")
             print("")

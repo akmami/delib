@@ -6,6 +6,8 @@ from decouple import config
 import json
 from file_send import file_send
 from file_read import read_file
+import sys
+import time
 
     
 
@@ -39,13 +41,12 @@ def main():
 
             read_file(file_path, public_ip, 8000, user_ip, 8000)
 
-            print("\n------------------------------------------------------------")
-            
-            print("\n------------------------------------------------------------")
    
             
         elif choice == "2":
-            pass
+            print("Exiting...")
+            time.sleep(2)
+            sys.exit()
         else:
             print("Invalid argument provided. Please select one of the options that is offered.")
             print("")
