@@ -248,8 +248,8 @@ class Node:
                                 filename = filename.split('\\')[-1] 
 
                             filepath = os.path.join(LIBRARY_DIR, filename)
+                            print(filepath)
 
-                            self.library.remove(filepath)                   # remove from list
                             os.remove(filepath)                             # remove file
                             logging.info( "File with filename {} removed successfully.".format(filename) )
                         
