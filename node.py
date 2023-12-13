@@ -227,6 +227,12 @@ class Node:
                         elif data["func"] == "t_read_file":
                             filename = data["filename"]
                             receiver_ip = data["receiver_ip"]
+
+                            if "/" in filename:
+                                filename = filename.split('/')[-1] 
+                            elif "\\" in filename:  
+                                filename = filename.split('\\')[-1] 
+
                             filepath = os.path.join(LIBRARY_DIR, filename)
 
                             file_send(filepath, PUBLIC_IP, 8000, receiver_ip, 8000)
@@ -235,6 +241,12 @@ class Node:
                         
                         elif data["func"] == "t_remove_file":
                             filename = data["filename"]
+
+                            if "/" in filename:
+                                filename = filename.split('/')[-1] 
+                            elif "\\" in filename:  
+                                filename = filename.split('\\')[-1] 
+
                             filepath = os.path.join(LIBRARY_DIR, filename)
 
                             self.library.remove(filename)                   # remove from list
