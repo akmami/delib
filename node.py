@@ -8,6 +8,8 @@ from decouple import config
 import logging
 import requests
 from file_send import file_send
+from consensus_check import ask_vote_for_cand_node
+from consensus_check import send_vote
 
 # Use a web service to get the public IP address
 response = requests.get('https://api64.ipify.org?format=json')
@@ -139,6 +141,20 @@ class Node:
                             
                         if data["func"] == "t_join_request":
                             new_ip = data["ip"]
+
+                            # voting process start
+                            num_voters = 0
+                            num_yes = 0
+
+                            for recv_ip in self.ips
+                                ask_vote_for_cand_node(new_ip, ip, 8000, recv_ip, 8000)
+                            # voting process end
+
+                            if num_voters / num_yes >= 2:
+                                logging.info( "Candidate node with IP {} is REJECTED. Current IPs: {}".format(new_ip,self.ips) )
+                                continue
+
+                            logging.info( "Candidate node with IP {} is ACCEPTED.".format(new_ip) )
                             
                             for ip in self.ips:
                                 if not ip == IP_ADDRESS:
@@ -217,6 +233,22 @@ class Node:
                             os.remove(filepath)                             # remove file
                             logging.info( "File with filename {} removed successfully.".format(filename) )
                         
+
+                        elif data["func"] == "t_ask_vote_cand_node":
+                            print( "You have been asked a vote to add a node with IP {} - your answer is automatically yes haha.".format(data["cand_node_ip"]) )
+                            vote = True
+                            send_vote(vote, data["cand_node_ip"], ip, 8000, data["sender_ip"], 8000)
+
+
+                        elif data["func"] == "t_send_vote":
+                            num_voters += 1
+                            if data["vote"]:
+                                num_yes += 1
+                            logging.info( "Vote received from node {} as {}. Votes: {}/{}".format(data["sender_ip"],data["vote"],num_yes,num_voters) )
+
+                            
+
+
                         # close connection
                         conn.close()
  
