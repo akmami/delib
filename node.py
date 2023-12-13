@@ -356,13 +356,10 @@ class Node:
 
                             if(os.path.exists(filepath)):
                                 # Open a file in read mode ('r' stands for read)
-                                with open(filepath, 'r') as file:
-                                    # Read the entire content of the file
-                                    content = file.read()
-                                    send_condition=1
-                                    os.remove(filepath)                             # remove file
-                                    logging.info( "File with filename {} removed successfully.".format(filename) )                                
-                                    conn.shutdown(1)
+                
+                                os.remove(filepath)                             # remove file
+                                logging.info( "File with filename {} removed successfully.".format(filename) )                                
+                                conn.shutdown(1)
                                 break
                             else:
                                 if((data["query_index"]< len(self.ips)-1)):
