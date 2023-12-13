@@ -322,17 +322,57 @@ class Node:
                         
                         elif data["func"] == "t_remove_file":
                             filename = data["filename"]
+                            receiver_ip = data["receiver_ip"]
 
                             if "/" in filename:
                                 filename = filename.split('/')[-1] 
                             elif "\\" in filename:  
                                 filename = filename.split('\\')[-1] 
 
-                            filepath = os.path.join(LIBRARY_DIR, filename)
-                            print(filepath)
+                            
+                            q_value = hash_file_name(filename)%MAX_NODE
 
-                            os.remove(filepath)                             # remove file
-                            logging.info( "File with filename {} removed successfully.".format(filename) )
+                            #Sort nodes list
+                            # Convert IP addresses to integers
+                            ip_integers = [int(ipaddress.IPv4Address(ip))%MAX_NODE for ip in self.ips]
+
+                            # Sort the list of IP addresses based on their integer values
+                            nodes = [ip for _, ip in sorted(zip(ip_integers, self.ips))]
+                            
+                            #Check where file is supposed to be
+                            for i in nodes:
+                                if(q_value <= int(ipaddress.IPv4Address(nodes[len(nodes)-1]))%MAX_NODE) and (q_value > int(ipaddress.IPv4Address(nodes[0]))%MAX_NODE):
+                                    if(q_value <= int(ipaddress.IPv4Address(i))%MAX_NODE):
+                                        split_index = i
+                                        query_nodes = nodes[nodes.index(i): len(nodes)] + nodes[0:len(nodes)-nodes.index(i)]
+                                        break
+                                else:
+                                    query_nodes = nodes
+                                    break
+
+                            filepath = os.path.join(LIBRARY_DIR, filename)
+               
+
+                            if(os.path.exists(filepath)):
+                                # Open a file in read mode ('r' stands for read)
+                                with open(filepath, 'r') as file:
+                                    # Read the entire content of the file
+                                    content = file.read()
+                                    send_condition=1
+                                    os.remove(filepath)                             # remove file
+                                    logging.info( "File with filename {} removed successfully.".format(filename) )                                
+                                    conn.shutdown(1)
+                                break
+                            else:
+                                if((data["query_index"]< len(self.ips)-1)):
+                                    send_condition=0
+                                    read_file(filename, data["sender_ip"], 8000, query_nodes[data["query_index"]], 8000, data["query_index"]+1)
+
+                                print("End of query!")
+                            conn.shutdown(1)
+                            break
+
+
                         
 
                         elif data["func"] == "t_ask_vote_cand_node":
