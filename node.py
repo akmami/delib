@@ -290,12 +290,12 @@ class Node:
                                     break
 
                             filepath = os.path.join(LIBRARY_DIR, filename)
-                            print(filepath)
+                            print(filename)
                             print(data["query_index"])
 
-                            if(os.path.exists(filepath)):
+                            if(os.path.exists(filename)):
                                 # Open a file in read mode ('r' stands for read)
-                                with open(filepath, 'r') as file:
+                                with open(filename, 'r') as file:
                                     # Read the entire content of the file
                                     content = file.read()
                                     send_condition=1
