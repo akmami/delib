@@ -249,7 +249,7 @@ class Node:
 
                             filepath = os.path.join(LIBRARY_DIR, filename)
 
-                            self.library.remove(filename)                   # remove from list
+                            self.library.remove(filepath)                   # remove from list
                             os.remove(filepath)                             # remove file
                             logging.info( "File with filename {} removed successfully.".format(filename) )
                         
