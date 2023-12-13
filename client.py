@@ -4,7 +4,7 @@ import socket
 from pathlib import Path
 from decouple import config
 import json
-from file_send import file_send
+from file_send_msg import file_send_msg
 from file_remove import remove
 from file_read import read_file
 import sys
@@ -44,7 +44,7 @@ def main():
                     with open(file_path, 'rb') as file:
                         file_data = file.read()
 
-                    file_send(file_path, public_ip, 8000, user_ip, 8000, 0)
+                    file_send_msg(file_path, public_ip, 8000, user_ip, 8000, 0)
                 except PermissionError:
                     print(f"Permission error: Unable to add '{file_path}'.")
                 except Exception as e:

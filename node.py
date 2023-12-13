@@ -212,16 +212,9 @@ class Node:
                             logging.info( "Local files deleted successfuly. See you." )
 
                             break
-                        
-                        elif data["func"] == "t_store_file":
+                        elif data["func"] == ["t_store_msg"]:
                             filename = data["filename"]
                             file_data = data["data"]
-
-                            if "/" in filename:
-                                filename = filename.split('/')[-1] 
-                            elif "\\" in filename:  
-                                filename = filename.split('\\')[-1] 
-
                             q_value = hash_file_name(filename)%MAX_NODE
                             print(q_value)
 
@@ -246,25 +239,30 @@ class Node:
                                 else:
                                     query_nodes = nodes
                                     break
+                            print(filename)
+                            print(PUBLIC_IP)
+                            print(query_nodes[0])
+                            file_send(filename, PUBLIC_IP, 8000, query_nodes[0], 8000, 0, data["file_content"])
+                            conn.shutdown(1)
+                            break
+                        
+                        elif data["func"] == "t_store_file":
+                            filename = data["filename"]
+                            file_data = data["data"]
 
-                            print("File is in node: ", query_nodes[0])
+                            if "/" in filename:
+                                filename = filename.split('/')[-1] 
+                            elif "\\" in filename:  
+                                filename = filename.split('\\')[-1] 
 
-                            
                             filepath = os.path.join(LIBRARY_DIR, filename)
                             
-                            # Get the file
-                            if(data["node_index"]< len(self.ips)):
-                                if(data["receiver_ip"]==PUBLIC_IP):
-                                    with open(filepath, "w") as f:
-                                        self.library.append(filename)       # add to list
-                                        logging.info( "File with filename {} received and stored successfully.".format(filename) )
-                                        f.write(file_data)                     # write to the file the bytes we just received
-                                        conn.shutdown(1)
-                                else:
-                                    file_send(filepath, PUBLIC_IP, 8000, query_nodes[data["node_index"]+1], 8000, data["node_index"]+1)
-                            else:
-                                print("Could not add file!")
+                            with open(filepath, "w") as f:
+                                self.library.append(filename)       # add to list
+                                logging.info( "File with filename {} received and stored successfully.".format(filename) )
+                                f.write(file_data)                     # write to the file the bytes we just received
                                 conn.shutdown(1)
+                    
                         
                         elif data["func"] == "t_read_file":
                             filename = data["filename"]
