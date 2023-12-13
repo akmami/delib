@@ -5,6 +5,14 @@ from decouple import config
 import json
 import argparse
 
+BUFFER_SIZE = config("BUFFER_SIZE", cast=int)   # send 4096 bytes each time step
+TRY_COUNT = config("TRY_COUNT", cast=int)       # try count to send request
+TCP_PORT = config("TCP_PORT", cast=int)
+UDP_PORT = config("UDP_PORT", cast=int)
+LIBRARY_DIR = config("LIBRARY_DIR")
+TEMP_DIR = config("TEMP")
+NETWORK_IP = config("NETWORK_IP")
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--filepath", help="filepath that will be send from node to node")
@@ -18,18 +26,20 @@ args = parser.parse_args()
 BUFFER_SIZE = config("BUFFER_SIZE", cast=int)
 
 
-def remove(filepath, sender_ip, sender_port, receiver_ip, receiver_port):
+def read_file(filepath, sender_ip, sender_port, receiver_ip, receiver_port, query_index):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
     s.connect((receiver_ip, sender_port))
     
+    filename = filepath.split('/')[-1] 
+    file_path = os.path.join(LIBRARY_DIR, filename)
 
-
-    data = {"func": "t_remove_file", "filename": filepath, "receiver_ip": receiver_ip, "receiver_port": receiver_port}
+    data = {"func": "t_remove_file", "filename": filepath, "sender_ip": sender_ip, "receiver_ip": receiver_ip, "receiver_port": receiver_port, "query_index": query_index}
     s.sendall( json.dumps(data).encode() )
-    
+
     print("sending {} to {}:{}".format(filepath, receiver_ip, receiver_port) )    
     s.shutdown(1)                   # default signal to shutdown file send/receive
     s.close()
+    
 
 
 #-------------------------------------------------------------------------------------------

@@ -61,7 +61,7 @@ def main():
             print("Please enter one IP part of delib:")
             user_ip = input()
 
-            read_file(file_path, public_ip, 8000, user_ip, 8000, 0)
+            remove(file_path, public_ip, 8000, user_ip, 8000, 0)
 
 
         elif choice == "3":
