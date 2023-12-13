@@ -14,6 +14,7 @@ from query import hash_file_name
 from typing import Final
 import ipaddress
 from file_read import read_file
+from file_remove import remove
 
 
 # Use a web service to get the public IP address
@@ -366,7 +367,7 @@ class Node:
                             else:
                                 if((data["query_index"]< len(self.ips)-1)):
                                     send_condition=0
-                                    read_file(filename, data["sender_ip"], 8000, query_nodes[data["query_index"]], 8000, data["query_index"]+1)
+                                    remove(filename, data["sender_ip"], 8000, query_nodes[data["query_index"]], 8000, data["query_index"]+1)
 
                                 print("End of query!")
                             conn.shutdown(1)
