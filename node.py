@@ -148,9 +148,14 @@ class Node:
 
                             for recv_ip in self.ips:
                                 ask_vote_for_cand_node(new_ip, self.ip, 8000, recv_ip, 8000)
+                            
+                            # own vote
+                            num_votes += 1
+                            num_yes += 1    # auto yes
+
                             # voting process end
 
-                            if num_voters / num_yes >= 2:
+                            if num_voters >= 2 * num_yes:
                                 logging.info( "Candidate node with IP {} is REJECTED. Current IPs: {}".format(new_ip,self.ips) )
                                 continue
 
@@ -236,7 +241,7 @@ class Node:
 
                         elif data["func"] == "t_ask_vote_cand_node":
                             print( "You have been asked a vote to add a node with IP {} - your answer is automatically yes haha.".format(data["cand_node_ip"]) )
-                            vote = True
+                            vote = True # auto yes
                             send_vote(vote, data["cand_node_ip"], self.ip, 8000, data["sender_ip"], 8000)
 
 
