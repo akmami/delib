@@ -270,7 +270,6 @@ class Node:
 
                             
                             q_value = hash_file_name(filename)%MAX_NODE
-                            print(q_value)
 
                             #Sort nodes list
                             # Convert IP addresses to integers
@@ -278,10 +277,6 @@ class Node:
 
                             # Sort the list of IP addresses based on their integer values
                             nodes = [ip for _, ip in sorted(zip(ip_integers, self.ips))]
-
-                            for i in nodes:
-                                print(i, " - ", int(ipaddress.IPv4Address(i))%MAX_NODE)
-
                             
                             #Check where file is supposed to be
                             for i in nodes:
@@ -294,11 +289,22 @@ class Node:
                                     query_nodes = nodes
                                     break
 
+                            filepath = os.path.join(LIBRARY_DIR, filename)
+
+                            if(os.path.exists(filepath)):
+                                # Open a file in read mode ('r' stands for read)
+                                with open(filepath, 'r') as file:
+                                    # Read the entire content of the file
+                                    content = file.read()
+                                    send_condition=1
+                            else:
+                                send_condition=0
+                            
                             if(data["query_index"]< len(self.ips)):
-                                if(query_nodes[data["query_index"]]== data["receiver_ip"]):
-                                    file_send(filename, data["sender_ip"], 8000, query_nodes[data["query_index"]], 8000, data["query_index"], data["data"])
+                                if(query_nodes[data["query_index"]]== data["receiver_ip"] and send_condition==1):
+                                    file_send(filename, data["sender_ip"], 8000, query_nodes[data["query_index"]], 8000, data["query_index"], content)
                                 else:
-                                    read_file(filename, data["sender_ip"], 8000, query_nodes[data["query_index"]+1], 8000, ["query_index"]+1)
+                                    read_file(filename, data["sender_ip"], 8000, query_nodes[data["query_index"]+1], 8000, data["query_index"]+1)
                             else:
                                 print("End of query. File not found!")
                             conn.shutdown(1)
