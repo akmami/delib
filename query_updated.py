@@ -19,6 +19,7 @@ def hash_file_name(file_name):
 
 MAX_NODE: Final = 100 
 
+"""""
 
 def query(file_name,port, nodes_unsorted):
     def_file_path = "C:\\Users\\Lenovo\\Desktop\\parallel\\files"
@@ -54,13 +55,13 @@ def query(file_name,port, nodes_unsorted):
 
 
     
+"""
 
 
-
-node_list = ["139.179.103.153","139.179.103.26", "139.179.103.5","139.179.103.2","139.179.103.10"] 
+#node_list = ["139.179.103.153","139.179.103.26", "139.179.103.5","139.179.103.2","139.179.103.10"] 
 #node_list = ["139.179.103.153","139.179.103.10"] 
-request_node = 8000         #This should be IP later on and it should connect us to the node list of the system
-query("f.txt", request_node, node_list)
+#request_node = 8000         #This should be IP later on and it should connect us to the node list of the system
+#query("f.txt", request_node, node_list)
 #query("b.txt", request_node, node_list)
 #query("c.txt", request_node, node_list)
 #query("d.txt", request_node, node_list)

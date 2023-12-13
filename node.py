@@ -10,12 +10,19 @@ import requests
 from file_send import file_send
 from consensus_check import ask_vote_for_cand_node
 from consensus_check import send_vote
+from query import hash_file_name
+from typing import Final
+import ipaddress
+
 
 # Use a web service to get the public IP address
 response = requests.get('https://api64.ipify.org?format=json')
 PUBLIC_IP = response.json()['ip']
 
 logging.info( "The public IP address is {}".format(PUBLIC_IP) )
+
+MAX_NODE: Final = 100 
+
 
 
 BUFFER_SIZE = config("BUFFER_SIZE", cast=int)   # send 4096 bytes each time step
@@ -214,14 +221,49 @@ class Node:
                                 filename = filename.split('/')[-1] 
                             elif "\\" in filename:  
                                 filename = filename.split('\\')[-1] 
+
+                            q_value = hash_file_name(filename)%MAX_NODE
+                            print(q_value)
+
+                            #Sort nodes list
+                            # Convert IP addresses to integers
+                            ip_integers = [int(ipaddress.IPv4Address(ip))%MAX_NODE for ip in self.ips]
+
+                            # Sort the list of IP addresses based on their integer values
+                            nodes = [ip for _, ip in sorted(zip(ip_integers, self.ips))]
+
+                            for i in nodes:
+                                print(i, " - ", int(ipaddress.IPv4Address(i))%MAX_NODE)
+
+                            
+                            #Check where file is supposed to be
+                            for i in nodes:
+                                if(q_value <= int(ipaddress.IPv4Address(nodes[len(nodes)-1]))%MAX_NODE) and (q_value > int(ipaddress.IPv4Address(nodes[0]))%MAX_NODE):
+                                    if(q_value <= int(ipaddress.IPv4Address(i))%MAX_NODE):
+                                        split_index = i
+                                        query_nodes = nodes[nodes.index(i): len(nodes)] + nodes[0:len(nodes)-nodes.index(i)]
+                                        break
+                                else:
+                                    query_nodes = nodes
+                                    break
+
+                            print("File is in node: ", query_nodes[0])
+
                             
                             filepath = os.path.join(LIBRARY_DIR, filename)
                             
                             # Get the file
-                            with open(filepath, "w") as f:
-                                self.library.append(filename)       # add to list
-                                logging.info( "File with filename {} received and stored successfully.".format(filename) )
-                                f.write(file_data)                     # write to the file the bytes we just received
+                            if(data["node_index"]< len(self.ips)):
+                                if(data["receiver_ip"]==PUBLIC_IP):
+                                    with open(filepath, "w") as f:
+                                        self.library.append(filename)       # add to list
+                                        logging.info( "File with filename {} received and stored successfully.".format(filename) )
+                                        f.write(file_data)                     # write to the file the bytes we just received
+                                        conn.shutdown(1)
+                                else:
+                                    file_send(filepath, PUBLIC_IP, 8000, query_nodes[data["node_index"]+1], 8000, data["node_index"]+1)
+                            else:
+                                print("Could not add file!")
                                 conn.shutdown(1)
                         
                         elif data["func"] == "t_read_file":
@@ -233,10 +275,44 @@ class Node:
                             elif "\\" in filename:  
                                 filename = filename.split('\\')[-1] 
 
+                            
+                            q_value = hash_file_name(filename)%MAX_NODE
+                            print(q_value)
+
+                            #Sort nodes list
+                            # Convert IP addresses to integers
+                            ip_integers = [int(ipaddress.IPv4Address(ip))%MAX_NODE for ip in self.ips]
+
+                            # Sort the list of IP addresses based on their integer values
+                            nodes = [ip for _, ip in sorted(zip(ip_integers, self.ips))]
+
+                            for i in nodes:
+                                print(i, " - ", int(ipaddress.IPv4Address(i))%MAX_NODE)
+
+                            
+                            #Check where file is supposed to be
+                            for i in nodes:
+                                if(q_value <= int(ipaddress.IPv4Address(nodes[len(nodes)-1]))%MAX_NODE) and (q_value > int(ipaddress.IPv4Address(nodes[0]))%MAX_NODE):
+                                    if(q_value <= int(ipaddress.IPv4Address(i))%MAX_NODE):
+                                        split_index = i
+                                        query_nodes = nodes[nodes.index(i): len(nodes)] + nodes[0:len(nodes)-nodes.index(i)]
+                                        break
+                                else:
+                                    query_nodes = nodes
+                                    break
+
+                            print("File is in node: ", query_nodes[0])
+                            print(len(query_nodes))
+
+                            
+                            """"
                             filepath = os.path.join(LIBRARY_DIR, filename)
-
-                            file_send(filepath, PUBLIC_IP, 8000, receiver_ip, 8000)
-
+                            
+                            if(os.path.exists(filepath)):
+                                file_send(filepath, PUBLIC_IP, 8000, receiver_ip, 8000)
+                            else:
+                                print(filename, " does not exist!")
+                            """
                                     
                         
                         elif data["func"] == "t_remove_file":

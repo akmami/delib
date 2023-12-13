@@ -44,7 +44,7 @@ def main():
                     with open(file_path, 'rb') as file:
                         file_data = file.read()
 
-                    file_send(file_path, public_ip, 8000, user_ip, 8000)
+                    file_send(file_path, public_ip, 8000, user_ip, 8000, 0)
                 except PermissionError:
                     print(f"Permission error: Unable to add '{file_path}'.")
                 except Exception as e:
