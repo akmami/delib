@@ -290,8 +290,7 @@ class Node:
                                     break
 
                             filepath = os.path.join(LIBRARY_DIR, filename)
-                            print(filename)
-                            print(data["query_index"])
+               
 
                             if(os.path.exists(filepath)):
                                 # Open a file in read mode ('r' stands for read)
@@ -300,11 +299,12 @@ class Node:
                                     content = file.read()
                                     send_condition=1
                                     file_send(filename, PUBLIC_IP, 8000, data["sender_ip"], 8000, data["query_index"], content)
-
+                                conn.shutdown(1)
+                                break
                             else:
                                 if((data["query_index"]< len(self.ips)-1)):
                                     send_condition=0
-                                    read_file(filename, data["sender_ip"], 8000, query_nodes[data["query_index"]+1], 8000, data["query_index"]+1)
+                                    read_file(filename, data["sender_ip"], 8000, query_nodes[data["query_index"]], 8000, data["query_index"]+1)
 
                                 print("End of query!")
                             conn.shutdown(1)
