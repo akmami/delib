@@ -393,7 +393,8 @@ class Node:
                             break
 
                         elif data["func"] == "t_ask_vote_cand_node":
-                            print( "You have been asked a vote to add a node with IP {} - vote via the pop-up terminal.".format(data["cand_node_ip"]) )
+                            cur_cand_ip = data["cand_node_ip"]
+                            print( "You have been asked a vote to add a node with IP {} - vote via the pop-up terminal.".format(cur_cand_ip) )
                             # call vote popup terminal here
                             run_separate_terminal(sys.executable,"vote_popup.py",5)
                             #global vote_collector_ip
@@ -411,7 +412,8 @@ class Node:
                                     num_yes += 1
                                 logging.info( "Own vote casted. Votes: {}/{}".format(num_yes,num_voters) )
                             else:
-                                send_vote(own_vote, data["cand_node_ip"], self.ip, 8000, vote_collector_ip, 8000)
+                                send_vote(own_vote, cur_cand_ip, self.ip, 8000, vote_collector_ip, 8000)
+                                cur_cand_ip = None
                             
                             break
 
@@ -425,6 +427,7 @@ class Node:
                             logging.info( "Vote received from node {} as {}. Votes: {}/{}".format(data["sender_ip"],data["vote"],num_yes,num_voters) )
 
                             break
+                            
                         else:
                             break
                         # close connection
