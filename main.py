@@ -27,7 +27,7 @@ def main():
         
         if choice == "2":
             ip = input("Please enter one of the Node's IP address : ")
-            node = Node(ip)
+            node = Node(ip,authority=False)
 
             # Start the server program in this window
             node.run(authority=False)

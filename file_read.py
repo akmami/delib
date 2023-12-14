@@ -36,7 +36,7 @@ def read_file(filepath, sender_ip, sender_port, receiver_ip, receiver_port, quer
     data = {"func": "t_read_file", "filename": filepath, "sender_ip": sender_ip, "receiver_ip": receiver_ip, "receiver_port": receiver_port, "query_index": query_index}
     s.sendall( json.dumps(data).encode() )
 
-    print("sending {} to {}:{}".format(filepath, receiver_ip, receiver_port) )    
+    print("requesting {} from {}".format(filepath, receiver_ip) )    
     s.shutdown(1)                   # default signal to shutdown file send/receive
     s.close()
     
