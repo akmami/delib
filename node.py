@@ -82,11 +82,12 @@ class Node:
 
             socket_tcp.sendall( json.dumps({"func": "t_join_request", "ip": IP_ADDRESS}).encode("utf-8") )
 
+            '''
             data = socket_tcp.recv(BUFFER_SIZE)
             self.ips = json.loads(data)
 
             logging.info("Successfully joined to the DS. IPs: {}".format(self.ips))
-
+            '''
             socket_tcp.close()
 
 
@@ -130,10 +131,9 @@ class Node:
                 
                 events = selector.select(timeout=1)
 
-                print("of")
+                #print("of")
                 if stillVoting:
-                    if num_voters >= len(self.ips) or time.time() - timeof_joinrequest > 5: # vote ends
-                        print("entered sandman")
+                    if num_voters >= len(self.ips) or time.time() - timeof_joinrequest > 7: # vote ends
                         stillVoting = False
                         self.add_cur_node()
 
@@ -197,6 +197,14 @@ class Node:
                             run_separate_terminal(sys.executable,"vote_popup.py",5)
 
                             # voting process end
+                        
+                        elif data["func"] == "t_accept_to_ds":
+                            self.ips = data["ips_inclusive"]
+                            logging.info("Successfully joined to DS. IPs: {}".format(self.ips))
+
+                        elif data["func"] == "t_reject_from_ds":
+                            logging.info("Rejected from joining to DS.")
+
 
                         elif data["func"] == "t_remove_ip":
                             ip = data["ip"]

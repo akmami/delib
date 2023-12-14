@@ -24,7 +24,7 @@ def ask_vote_for_cand_node(cand_node_ip, sender_ip, sender_port, receiver_ip, re
     data = {"func": "t_ask_vote_cand_node", "cand_node_ip": cand_node_ip, "sender_ip": sender_ip, "sender_port": sender_port, "receiver_ip": receiver_ip, "receiver_port": receiver_port}
     s.sendall( json.dumps(data).encode() )
     
-    print("asking vote for candidate node {} - from {}".format(cand_node_ip, receiver_ip) )    
+    print("Asking vote for candidate node {} - from {}".format(cand_node_ip, receiver_ip) )    
     s.shutdown(1)                   # default signal to shutdown file send/receive
     s.close()
 
@@ -36,7 +36,7 @@ def send_vote(vote, cand_node_ip, sender_ip, sender_port, receiver_ip, receiver_
     data = {"func": "t_send_vote", "vote": vote, "cand_node_ip": cand_node_ip, "sender_ip": sender_ip, "sender_port": sender_port, "receiver_ip": receiver_ip, "receiver_port": receiver_port}
     s.sendall( json.dumps(data).encode() )
     
-    print("sending vote for candidate node {} - to {}".format(cand_node_ip, receiver_ip) )    
+    print("Sending vote for candidate node {} - to {}".format(cand_node_ip, receiver_ip) )    
     s.shutdown(1)                   # default signal to shutdown file send/receive
     s.close()
 
@@ -48,7 +48,30 @@ def vote_from_terminal(vote, sender_ip, sender_port, receiver_ip, receiver_port)
     data = {"func": "t_vote_from_terminal", "vote": vote}
     s.sendall( json.dumps(data).encode() )
     
-    print("vote sent.")    
+    print("Vote sent.")    
+    s.shutdown(1)                   # default signal to shutdown file send/receive
+    s.close()
+
+# although this is not a consensus thing, it is in this file
+def accept_to_ds(ips_inclusive, sender_ip, sender_port, receiver_ip, receiver_port):
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
+    s.connect((receiver_ip, sender_port))
+
+    data = {"func": "t_accept_to_ds", "ips_inclusive": ips_inclusive}
+    s.sendall( json.dumps(data).encode() )
+       
+    s.shutdown(1)                   # default signal to shutdown file send/receive
+    s.close()
+
+def reject_from_ds(sender_ip, sender_port, receiver_ip, receiver_port):
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
+    s.connect((receiver_ip, sender_port))
+
+    data = {"func": "t_reject_from_ds"}
+    s.sendall( json.dumps(data).encode() )
+       
     s.shutdown(1)                   # default signal to shutdown file send/receive
     s.close()
 
