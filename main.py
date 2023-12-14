@@ -3,6 +3,8 @@ import platform
 import subprocess 
 import sys
 
+
+
 def main():
     print("Welcome to Online Library Catalog Stored in Decentralised Network (delib)")
     print("You can either request to join existing network or create your own one.")
@@ -33,7 +35,7 @@ def main():
             else:
                 raise OSError(f"Unsupported operating system: {system}")
             
-            if system == "Linux":
+            if system == "Linux" or system == "Darwin":
                 subprocess.Popen(terminal_command, start_new_session=True)
             elif system == "Windows":
                 subprocess.Popen(terminal_command, start_new_session=True, shell=True)
@@ -60,7 +62,7 @@ def main():
             else:
                 raise OSError(f"Unsupported operating system: {system}")
             
-            if system == "Linux":
+            if system == "Linux" or system == "Darwin":
                 subprocess.Popen(terminal_command, start_new_session=True)
             elif system == "Windows":
                 subprocess.Popen(terminal_command, start_new_session=True, shell=True)
@@ -99,8 +101,6 @@ def main():
             print("Invalid argument provided. Please enter 1 or 2.")
             
         
-
-
 #-------------------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------------------
 # MARK: Main

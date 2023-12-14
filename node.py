@@ -15,6 +15,9 @@ from typing import Final
 import ipaddress
 from file_read import read_file
 from file_remove import remove
+import sys
+import psutil
+import subprocess
 
 
 # Use a web service to get the public IP address
@@ -45,6 +48,7 @@ TEMP_DIR = os.path.join(CWD, TEMP_DIR)          # get full directory for temp fo
 
 num_voters = 0
 num_yes = 0
+vote = False
 
 if not os.path.exists(LIBRARY_DIR):             # all items in node will be stored under library folder
     os.mkdir(LIBRARY_DIR)
@@ -164,6 +168,13 @@ class Node:
                             # own vote
                             num_voters += 1
                             num_yes += 1    # auto yes
+                            logging.info( "Own vote casted. Votes: {}/{}".format(num_yes,num_voters) )
+                            
+                            time_counter = 5
+                            while num_voters < len(self.ips) and time_counter > 0:
+                                time.sleep(1)
+                                time_counter -= 1
+
 
                             # voting process end
 
@@ -374,16 +385,30 @@ class Node:
                         
 
                         elif data["func"] == "t_ask_vote_cand_node":
-                            print( "You have been asked a vote to add a node with IP {} - your answer is automatically yes haha.".format(data["cand_node_ip"]) )
-                            vote = True # auto yes
+                            print( "You have been asked a vote to add a node with IP {} - vote via the pop-up terminal.".format(data["cand_node_ip"]) )
+                            
+                            # call vote popup terminal here
+                            # vote = True # auto yes
+                            run_separate_terminal(sys.executable,"vote_popup.py",proc)
+                            time.sleep(5)
+                            pobj = psutil.Process(proc.pid)
+                            # list children & kill them
+                            for c in pobj.children(recursive=True):
+                                c.kill()
+                            pobj.kill()
+
                             send_vote(vote, data["cand_node_ip"], self.ip, 8000, data["sender_ip"], 8000)
-
-
+                        
+                        elif data["func"] == "t_vote_from_terminal":    # in progress
+                            vote = data["vote"]
+                            
                         elif data["func"] == "t_send_vote":
                             num_voters += 1
                             if data["vote"]:
                                 num_yes += 1
                             logging.info( "Vote received from node {} as {}. Votes: {}/{}".format(data["sender_ip"],data["vote"],num_yes,num_voters) )
+                        
+                        
 
                             
 
@@ -435,3 +460,22 @@ class Node:
         logging.info( "Thread execution ended for node. Waiting for the last 5 seconds" )
         
         time.sleep(5)
+
+def run_separate_terminal(executable,arguments,proc):
+    arguments = "client.py"
+            
+    system = platform.system()
+
+    if system == "Linux":
+        terminal_command = ["x-terminal-emulator", "-e", sys.executable, arguments]
+    elif system == "Darwin": 
+        terminal_command = ["open", "-a", "Terminal.app", sys.executable, arguments]
+    elif system == "Windows":
+        terminal_command = ["start", "cmd", "/k", sys.executable, arguments]
+    else:
+        raise OSError(f"Unsupported operating system: {system}")
+            
+    if system == "Linux" or system == "Darwin":
+        proc = subprocess.Popen(terminal_command, start_new_session=True)
+    elif system == "Windows":
+        proc = subprocess.Popen(terminal_command, start_new_session=True, shell=True)

@@ -52,8 +52,6 @@ def main():
             else:
                 print("This file does not exist!")
 
-
-
         elif choice == "2":
             #Adding code here
             print("Please enter the name of the file you want to delete:")

@@ -24,7 +24,7 @@ def ask_vote_for_cand_node(cand_node_ip, sender_ip, sender_port, receiver_ip, re
     data = {"func": "t_ask_vote_cand_node", "cand_node_ip": cand_node_ip, "sender_ip": sender_ip, "sender_port": sender_port, "receiver_ip": receiver_ip, "receiver_port": receiver_port}
     s.sendall( json.dumps(data).encode() )
     
-    print("asking vote for candidate node {} - from {}:{}".format(cand_node_ip, receiver_ip, receiver_port) )    
+    print("asking vote for candidate node {} - from {}".format(cand_node_ip, receiver_ip) )    
     s.shutdown(1)                   # default signal to shutdown file send/receive
     s.close()
 
@@ -36,7 +36,7 @@ def send_vote(vote, cand_node_ip, sender_ip, sender_port, receiver_ip, receiver_
     data = {"func": "t_send_vote", "vote": vote, "cand_node_ip": cand_node_ip, "sender_ip": sender_ip, "sender_port": sender_port, "receiver_ip": receiver_ip, "receiver_port": receiver_port}
     s.sendall( json.dumps(data).encode() )
     
-    print("sending vote for candidate node {} - to {}:{}".format(cand_node_ip, receiver_ip, receiver_port) )    
+    print("sending vote for candidate node {} - to {}".format(cand_node_ip, receiver_ip) )    
     s.shutdown(1)                   # default signal to shutdown file send/receive
     s.close()
 
