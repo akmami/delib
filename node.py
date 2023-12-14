@@ -68,6 +68,7 @@ if not os.path.exists(TEMP_DIR):                # all temp items in node will be
 
 class Node:
     def __init__(self, ip=None):
+
         self.ip = IP_ADDRESS
         self.ips = [IP_ADDRESS]
         self.library = []
@@ -91,9 +92,11 @@ class Node:
             logging.info("Successfully joined to the DS. IPs: {}".format(self.ips))
             '''
             socket_tcp.close()
+        else:
+            run_separate_terminal(sys.executable,"client.py",1000)
 
 
-    def run(self, t_sec=31536000):                                  # default end time is set to 1 year = 31536000
+    def run(self, authority=True , t_sec=31536000):                                  # default end time is set to 1 year = 31536000
 
         global stillVoting
         global num_voters
@@ -203,6 +206,11 @@ class Node:
                         elif data["func"] == "t_accept_to_ds":
                             self.ips = data["ips_inclusive"]
                             logging.info("Successfully joined to DS. IPs: {}".format(self.ips))
+
+                            if authority:
+                                run_separate_terminal(sys.executable,"client.py",1000)
+                            else:
+                                run_separate_terminal(sys.executable,"guest_client.py",1000)
 
                         elif data["func"] == "t_reject_from_ds":
                             logging.info("Rejected from joining to DS.")
@@ -427,7 +435,7 @@ class Node:
                             logging.info( "Vote received from node {} as {}. Votes: {}/{}".format(data["sender_ip"],data["vote"],num_yes,num_voters) )
 
                             break
-                            
+
                         else:
                             break
                         # close connection
