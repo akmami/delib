@@ -7,6 +7,7 @@ import json
 from file_send import file_send
 from file_remove import remove
 from file_read import read_file
+from consensus_check import vote_from_terminal
 
     
 
@@ -33,29 +34,20 @@ def main():
 
         if choice == "1":
             vote = True
-            vote_from_terminal(vote, public_ip, 8000, public_ip, 8000)
+            print("voted yes")
+            vote_from_terminal(vote, "127.0.0.1", 8000, "127.0.0.1", 8000)
             exit()
 
         elif choice == "2":
             vote = False
-            vote_from_terminal(vote, public_ip, 8000, public_ip, 8000)
+            print("voted no")
+            vote_from_terminal(vote, "127.0.0.1", 8000, "127.0.0.1", 8000)
             exit()
 
         else:
             print("Invalid argument provided. Please select one of the options that is offered.")
             print("")
 
-def vote_from_terminal(vote, sender_ip, sender_port, receiver_ip, receiver_port):
-
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
-    s.connect((receiver_ip, sender_port))
-
-    data = {"func": "t_vote_from_terminal", "vote": vote}
-    s.sendall( json.dumps(data).encode() )
-    
-    print("Vote sent.")    
-    s.shutdown(1)                   # default signal to shutdown file send/receive
-    s.close()
 
 
 

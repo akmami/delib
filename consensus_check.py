@@ -40,6 +40,19 @@ def send_vote(vote, cand_node_ip, sender_ip, sender_port, receiver_ip, receiver_
     s.shutdown(1)                   # default signal to shutdown file send/receive
     s.close()
 
+def vote_from_terminal(vote, sender_ip, sender_port, receiver_ip, receiver_port):
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
+    s.connect((receiver_ip, sender_port))
+
+    data = {"func": "t_vote_from_terminal", "vote": vote}
+    s.sendall( json.dumps(data).encode() )
+    
+    print("vote sent.")    
+    s.shutdown(1)                   # default signal to shutdown file send/receive
+    s.close()
+
+
 #-------------------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------------------
 # MARK: Main

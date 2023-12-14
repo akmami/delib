@@ -18,6 +18,7 @@ from file_remove import remove
 import sys
 import psutil
 import subprocess
+import platform
 
 
 # Use a web service to get the public IP address
@@ -28,7 +29,15 @@ logging.info( "The public IP address is {}".format(PUBLIC_IP) )
 
 MAX_NODE: Final = 100 
 
-
+# vote variables
+own_vote = None
+num_voters = 0
+num_yes = 0
+timeof_joinrequest = 0
+stillVoting = False
+cur_cand_ip = None
+vote_collector_ip = None
+conn = None
 
 BUFFER_SIZE = config("BUFFER_SIZE", cast=int)   # send 4096 bytes each time step
 TRY_COUNT = config("TRY_COUNT", cast=int)       # try count to send request
@@ -46,9 +55,6 @@ LIBRARY_DIR = os.path.join(CWD, LIBRARY_DIR)    # get full directory for library
 TEMP_DIR = os.path.join(CWD, TEMP_DIR)          # get full directory for temp folder.
                                                 # this will be used to store temp files in case file transfer is needed
 
-num_voters = 0
-num_yes = 0
-vote = False
 
 if not os.path.exists(LIBRARY_DIR):             # all items in node will be stored under library folder
     os.mkdir(LIBRARY_DIR)
@@ -86,6 +92,16 @@ class Node:
 
     def run(self, t_sec=31536000):                                  # default end time is set to 1 year = 31536000
 
+        global stillVoting
+        global num_voters
+        global num_yes
+        global timeof_joinrequest
+        global cur_cand_ip
+        global vote_collector_ip
+        global own_vote
+
+        global conn
+
         selector = selectors.DefaultSelector()
 
         # Create TCP socket
@@ -112,25 +128,32 @@ class Node:
         try:
             while not done and time.time() < t_end:
                 
-                events = selector.select()
+                events = selector.select(timeout=1)
+
+                print("of")
+                if stillVoting:
+                    if num_voters >= len(self.ips) or time.time() - timeof_joinrequest > 5: # vote ends
+                        print("entered sandman")
+                        stillVoting = False
+                        self.add_cur_node()
+
 
                 for key, _ in events:
+
+                    print(":(")
                     
                     if key.fileobj == socket_tcp:           # messages received by TCP protocol
-
                         (conn, addr) = key.fileobj.accept()
                         data_all = conn.recv(BUFFER_SIZE)       # receive data from client
                         #data = data_all.split(b'}')[0] + b'}'
                         #file_data = data_all.split(b'}')[1]
                         data= json.loads(data_all)
-                        
 
                         if "func" not in data:
                             logging.warning("Request received which does not contain 'func' tag.")
                             continue
 
                         logging.info( "Request with func: '{}' received from socket channel.".format( data["func"] ) )
-
 
                         # --------------------------------------------------------------------------------------------
                         # --------------------------------------------------------------------------------------------
@@ -154,49 +177,27 @@ class Node:
                             self.ips.sort()
                             logging.info( "New IP added to the list. Current IPs: {}".format(self.ips) )
                             
-                        if data["func"] == "t_join_request":
-                            new_ip = data["ip"]
+                        if data["func"] == "t_join_request" and stillVoting == False:
+                            #global cur_cand_ip
+                            cur_cand_ip = data["ip"]
 
                             # voting process start
+
+                            own_vote = False
                             num_voters = 0
                             num_yes = 0
-
+                            timeof_joinrequest = time.time()
+                            stillVoting = True
+                            
                             for recv_ip in self.ips:
                                 if not recv_ip == self.ip:
-                                    ask_vote_for_cand_node(new_ip, self.ip, 8000, recv_ip, 8000)
+                                    ask_vote_for_cand_node(cur_cand_ip, self.ip, 8000, recv_ip, 8000)
                             
                             # own vote
-                            num_voters += 1
-                            num_yes += 1    # auto yes
-                            logging.info( "Own vote casted. Votes: {}/{}".format(num_yes,num_voters) )
-                            
-                            time_counter = 5
-                            while num_voters < len(self.ips) and time_counter > 0:
-                                time.sleep(1)
-                                time_counter -= 1
-
+                            run_separate_terminal(sys.executable,"vote_popup.py",5)
 
                             # voting process end
 
-                            if num_voters >= 2 * num_yes:
-                                logging.info( "Candidate node with IP {} is REJECTED. Current IPs: {}".format(new_ip,self.ips) )
-                                continue
-
-                            logging.info( "Candidate node with IP {} is ACCEPTED.".format(new_ip) )
-                            
-                            for ip in self.ips:
-                                if not ip == IP_ADDRESS:
-                                    message_socket = socket.socket()
-                                    message_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                                    message_socket.connect((ip, TCP_PORT))
-                                    message_socket.sendall( json.dumps({"func": "t_save_ip", "ip": new_ip}).encode("utf-8") )
-                                    message_socket.close()
-
-                            self.ips.append(new_ip)
-                            self.ips.sort()
-                            conn.sendall( json.dumps(self.ips).encode("utf-8") )
-                            logging.info( "New IP added to the list. Current IPs: {}".format(self.ips) )
-                        
                         elif data["func"] == "t_remove_ip":
                             ip = data["ip"]
                             self.ips.remove(ip)
@@ -381,38 +382,43 @@ class Node:
                             conn.shutdown(1)
                             break
 
-
-                        
-
                         elif data["func"] == "t_ask_vote_cand_node":
                             print( "You have been asked a vote to add a node with IP {} - vote via the pop-up terminal.".format(data["cand_node_ip"]) )
-                            
                             # call vote popup terminal here
-                            # vote = True # auto yes
-                            run_separate_terminal(sys.executable,"vote_popup.py",proc)
-                            time.sleep(5)
-                            pobj = psutil.Process(proc.pid)
-                            # list children & kill them
-                            for c in pobj.children(recursive=True):
-                                c.kill()
-                            pobj.kill()
-
-                            send_vote(vote, data["cand_node_ip"], self.ip, 8000, data["sender_ip"], 8000)
-                        
-                        elif data["func"] == "t_vote_from_terminal":    # in progress
-                            vote = data["vote"]
+                            run_separate_terminal(sys.executable,"vote_popup.py",5)
+                            #global vote_collector_ip
+                            vote_collector_ip = data["sender_ip"]
+                            break
                             
-                        elif data["func"] == "t_send_vote":
+                        
+                        elif data["func"] == "t_vote_from_terminal" and stillVoting:    # in progress
+                            #global stillVoting
+                            #global own_vote
+                            own_vote = data["vote"]
+
+                            if stillVoting:
+                                print( "recvd from terminal: {}".format(own_vote))
+                                num_voters += 1
+                                if own_vote:
+                                    num_yes += 1
+                                logging.info( "Own vote casted. Votes: {}/{}".format(num_yes,num_voters) )
+                            else:
+                                send_vote(vote, data["cand_node_ip"], self.ip, 8000, vote_collector_ip, 8000)
+                            
+                            break
+
+
+                        elif data["func"] == "t_send_vote" and stillVoting:
+                            #global num_voters
+                            #global num_yes
                             num_voters += 1
                             if data["vote"]:
                                 num_yes += 1
                             logging.info( "Vote received from node {} as {}. Votes: {}/{}".format(data["sender_ip"],data["vote"],num_yes,num_voters) )
-                        
-                        
 
-                            
-
-
+                            break
+                        else:
+                            break
                         # close connection
                         conn.close()
  
@@ -434,6 +440,8 @@ class Node:
                         
                         # close connection
                         conn.close()
+                    else:
+                        break
 
         except KeyboardInterrupt:
             logging.info("Server terminated from keyboard.")
@@ -460,9 +468,33 @@ class Node:
         logging.info( "Thread execution ended for node. Waiting for the last 5 seconds" )
         
         time.sleep(5)
+    
+    def add_cur_node(self):
+        global num_voters
+        global num_yes
+        global cur_cand_ip
 
-def run_separate_terminal(executable,arguments,proc):
-    arguments = "client.py"
+        if num_voters >= 2 * num_yes:
+            logging.info( "Candidate node with IP {} is REJECTED. Current IPs: {}".format(cur_cand_ip,self.ips) )
+            return
+
+        logging.info( "Candidate node with IP {} is ACCEPTED.".format(cur_cand_ip) )
+                                
+        for ip in self.ips:
+            if not ip == IP_ADDRESS:
+                message_socket = socket.socket()
+                message_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                message_socket.connect((ip, TCP_PORT))
+                message_socket.sendall( json.dumps({"func": "t_save_ip", "ip": cur_cand_ip}).encode("utf-8") )
+                message_socket.close()
+
+        self.ips.append(cur_cand_ip)
+        self.ips.sort()
+        conn.sendall( json.dumps(self.ips).encode("utf-8") )
+        logging.info( "New IP added to the list. Current IPs: {}".format(self.ips) )
+
+
+def run_separate_terminal(executable,arguments,timeof_popup):
             
     system = platform.system()
 
@@ -478,4 +510,18 @@ def run_separate_terminal(executable,arguments,proc):
     if system == "Linux" or system == "Darwin":
         proc = subprocess.Popen(terminal_command, start_new_session=True)
     elif system == "Windows":
-        proc = subprocess.Popen(terminal_command, start_new_session=True, shell=True)
+        try:
+            proc = subprocess.Popen(terminal_command, start_new_session=True, shell=True)
+            proc.wait(timeout=timeof_popup)
+        except subprocess.TimeoutExpired:
+            proc.terminate()
+            proc.wait()
+
+'''
+    time.sleep(timeof_popup)
+    pobj = psutil.Process(proc.pid)
+    for c in pobj.children(recursive=True):
+        c.kill()
+    pobj.kill()
+'''
+
