@@ -10,6 +10,8 @@ import requests
 from file_send import file_send
 from consensus_check import ask_vote_for_cand_node
 from consensus_check import send_vote
+from consensus_check import accept_to_ds
+from consensus_check import reject_from_ds
 from query import hash_file_name
 from typing import Final
 import ipaddress
@@ -133,14 +135,14 @@ class Node:
 
                 #print("of")
                 if stillVoting:
-                    if num_voters >= len(self.ips) or time.time() - timeof_joinrequest > 7: # vote ends
+                    if num_voters >= len(self.ips) or time.time() - timeof_joinrequest > 10: # vote ends
                         stillVoting = False
                         self.add_cur_node()
 
 
                 for key, _ in events:
 
-                    print(":(")
+                    #print(":(")
                     
                     if key.fileobj == socket_tcp:           # messages received by TCP protocol
                         (conn, addr) = key.fileobj.accept()
@@ -399,19 +401,17 @@ class Node:
                             break
                             
                         
-                        elif data["func"] == "t_vote_from_terminal" and stillVoting:    # in progress
-                            #global stillVoting
-                            #global own_vote
+                        elif data["func"] == "t_vote_from_terminal":    # in progress
                             own_vote = data["vote"]
 
                             if stillVoting:
-                                print( "recvd from terminal: {}".format(own_vote))
+                                #print( "recvd from terminal: {}".format(own_vote))
                                 num_voters += 1
                                 if own_vote:
                                     num_yes += 1
                                 logging.info( "Own vote casted. Votes: {}/{}".format(num_yes,num_voters) )
                             else:
-                                send_vote(vote, data["cand_node_ip"], self.ip, 8000, vote_collector_ip, 8000)
+                                send_vote(own_vote, data["cand_node_ip"], self.ip, 8000, vote_collector_ip, 8000)
                             
                             break
 
@@ -484,6 +484,7 @@ class Node:
 
         if num_voters >= 2 * num_yes:
             logging.info( "Candidate node with IP {} is REJECTED. Current IPs: {}".format(cur_cand_ip,self.ips) )
+            reject_from_ds(self.ip,8000,cur_cand_ip,8000)
             return
 
         logging.info( "Candidate node with IP {} is ACCEPTED.".format(cur_cand_ip) )
@@ -498,8 +499,9 @@ class Node:
 
         self.ips.append(cur_cand_ip)
         self.ips.sort()
-        conn.sendall( json.dumps(self.ips).encode("utf-8") )
         logging.info( "New IP added to the list. Current IPs: {}".format(self.ips) )
+        
+        accept_to_ds(self.ips,self.ip,8000,cur_cand_ip,8000)
 
 
 def run_separate_terminal(executable,arguments,timeof_popup):
